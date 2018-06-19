@@ -1,0 +1,32 @@
+name:                musicw
+version:             0.0.0.1
+synopsis:            Library for describing Web Audio sound synthesis events, to be used with Reflex-DOM
+description:         Please see README.md
+homepage:            http://github.com/d0kt0r0/reflex-synth/blob/master/README.md
+license:             GPL-3
+license-file:        LICENSE
+author:              David Ogborn, Jamie Beverley, Luis Navarro del Angel, Spencer Park and others
+maintainer:          ogbornd@mcmaster.ca
+copyright:           2017- David Ogborn, Jamie Beverley, Luis Navarro del Angel, Spencer Park and others
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+extra-source-files:
+
+Library
+  hs-source-dirs:  src
+  js-sources:      MusicW.js
+  Build-Depends:   base, containers, safe, ghcjs-base, ghcjs-dom, text,
+                   array, ghcjs-prim, data-default, transformers, file-embed, time, monad-loops,
+                   json, bytestring
+  GHC-Options:     -Wall -fwarn-tabs
+  Exposed-modules: Sound.MusicW
+                   Sound.MusicW.AudioRoutingGraph
+                   Sound.MusicW.Buffer
+                   Sound.MusicW.Components
+                   Sound.MusicW.Graph
+                   Sound.MusicW.Node
+                   Sound.MusicW.Spec
+                   Sound.MusicW.Synthstance
+  other-modules:
+  default-language: Haskell2010
