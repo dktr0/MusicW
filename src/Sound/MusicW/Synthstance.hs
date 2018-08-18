@@ -3,7 +3,8 @@ module Sound.MusicW.Synthstance (
   startSynth,
   startSynthNow,
   stopSynth,
-  stopSynthNow
+  stopSynthNow,
+  Synthstance(..)
 ) where
 
 import Sound.MusicW.Graph
