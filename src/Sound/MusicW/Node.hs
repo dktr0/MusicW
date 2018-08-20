@@ -32,6 +32,7 @@ import Control.Monad
 data Node
   -- Source nodes
   = AudioBufferSourceNode { jsval :: JSVal, bufferParams :: BufferParams }  -- Also needs playbackParams b.c. some playback properties are only specified when you call 'start()' on that node
+  | ConstantNode { jsval :: JSVal }
   | OscillatorNode { jsval :: JSVal }
   -- SourceSink nodes
   | BiquadFilterNode { jsval :: JSVal }
@@ -47,6 +48,7 @@ data Node
 
 instance Show Node where
   show (AudioBufferSourceNode _ _) = "AudioBufferSourceNode"
+  show (ConstantNode _) = "ConstantNode"
   show (OscillatorNode _) = "OscillatorNode"
   show (BiquadFilterNode _) = "BiquadFilterNode"
   show (ConvolverNode _) = "ConvolverNode"
@@ -60,6 +62,7 @@ instance Show Node where
 
 isSourceNode :: Node -> Bool
 isSourceNode (AudioBufferSourceNode _ _) = True
+isSourceNode (ConstantNode _) = True
 isSourceNode (OscillatorNode _) = True
 isSourceNode _ = False
 
@@ -86,6 +89,7 @@ setGainDb node g = js_setParamValue (js_audioParam node $ toJSString "gain") $ i
 setQ :: JSVal -> Double -> WebAudioContext -> IO ()
 setQ node q = js_setParamValue (js_audioParam node $ toJSString "Q") q
 
+
 instantiateSourceNode :: SourceNodeSpec -> WebAudioContext -> IO Node
 instantiateSourceNode Silent ctx = do
   sampleRate <- js_sampleRate ctx
@@ -108,6 +112,10 @@ instantiateSourceNode (AudioBufferSource buffer params@(BufferParams loopstart l
   setJSField src "loopend" loopend
   setJSField src "loop" loop
   return $ AudioBufferSourceNode src params
+instantiateSourceNode (Constant x) ctx = do
+  y <- js_createConstantSource ctx
+  setJSField src "offset" y
+  return $ ConstantNode y
 
 instantiateSourceSinkNode :: SourceSinkNodeSpec -> WebAudioContext -> IO Node
 instantiateSourceSinkNode (Filter spec) ctx = do
@@ -192,7 +200,7 @@ instantiateArraySpec (Right spec) = do
 fillArray :: Int -> FloatArraySpec -> Float32Array -> IO ()
 fillArray _ EmptyArray _ = return ()
 fillArray i (Const n x tl) arr = do
-  js_typedArraySetConst i (i + n) x arr 
+  js_typedArraySetConst i (i + n) x arr
   fillArray (i + n) tl arr
 fillArray i (Segment xs tl) arr = do
   jsArray <- toJSArray $ fmap pToJSVal xs

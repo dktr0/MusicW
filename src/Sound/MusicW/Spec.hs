@@ -14,6 +14,7 @@ data SourceNodeSpec
   = Silent
   | Oscillator OscillatorType Frequency
   | AudioBufferSource AudioBuffer BufferParams
+  | Constant Double
   deriving (Show)
 
 data SourceSinkNodeSpec

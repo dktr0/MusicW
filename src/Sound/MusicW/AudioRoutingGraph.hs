@@ -67,6 +67,10 @@ foreign import javascript safe
   js_createOscillator :: WebAudioContext -> IO JSVal
 
 foreign import javascript safe
+  "$1.createConstantSource()"
+  js_createConstantSource :: WebAudioContext -> IO JSVal
+
+foreign import javascript safe
   "$1.createBufferSource()"
   js_createBufferSource :: WebAudioContext -> IO JSVal
 
