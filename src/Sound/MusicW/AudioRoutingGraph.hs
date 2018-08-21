@@ -116,6 +116,14 @@ foreign import javascript safe
 
 setJSField :: (PToJSVal o, PToJSVal v) => o -> String -> v -> IO ()
 setJSField o f v = js_setField (pToJSVal o) (toJSString f) (pToJSVal v)
+-- *** note that this does NOT work if the parameter to be set is something like x.offset.value
+
+foreign import javascript safe
+  "$1.offset.value = $2"
+  js_setConstantOffset :: JSVal -> JSVal -> IO ()
+
+setConstantOffset :: (PToJSVal o, PToJSVal v) => o -> v -> IO ()
+setConstantOffset o v = js_setConstantOffset (pToJSVal o) (pToJSVal v)
 
 foreign import javascript safe
   "$1[$2]"

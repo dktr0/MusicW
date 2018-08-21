@@ -114,7 +114,7 @@ instantiateSourceNode (AudioBufferSource buffer params@(BufferParams loopstart l
   return $ AudioBufferSourceNode src params
 instantiateSourceNode (Constant x) ctx = do
   y <- js_createConstantSource ctx
-  setJSField y "offset.value" x
+  setConstantOffset y x
   return $ ConstantNode y
 
 instantiateSourceSinkNode :: SourceSinkNodeSpec -> WebAudioContext -> IO Node
