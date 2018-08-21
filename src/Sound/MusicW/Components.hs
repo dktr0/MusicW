@@ -17,6 +17,8 @@ oscillator oscType freq = synthSource $ Oscillator oscType freq
 audioBufferSource :: AudioBuffer -> BufferParams -> SynthBuilder Graph
 audioBufferSource b p = synthSource $ AudioBufferSource b p
 
+constant :: Double -> SynthBuilder Graph
+constant x = synthSource $ Constant x
 
 biquadFilter :: FilterSpec -> SynthBuilder Graph
 biquadFilter = synthSourceSink . Filter
