@@ -15,6 +15,7 @@ module Sound.MusicW.Graph (
   synthSink,
   getNodeId,
   audioParamSink,
+  audioReSink,
   setParamValue,
   linearRampToParamValue,
   exponentialRampToParamValue,
@@ -200,6 +201,16 @@ audioParamSink p g = lift $ Synth {
     supplement = g
   }
   where g' = Sink (RefToParamOfNode (getNodeId g) p) EmptyGraph
+
+audioReSink :: Graph -> SynthBuilder Graph
+audioReSink g = lift $ Synth {
+    graphs = ([g'],[]),
+    env = Map.empty,
+    changes = [],
+    deletionTime = Nothing,
+    supplement = g
+  }
+  where g' = Sink (RefToNode (getNodeId g)) EmptyGraph
 
 getNodeId :: Graph -> Integer
 getNodeId (Source (RefToNode r)) = r
