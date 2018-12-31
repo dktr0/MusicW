@@ -43,6 +43,24 @@ connectGraph m (Sink (RefToParamOfNode to paramName) from) = do
   connectGraph m from
 connectGraph _ _ = error "Malformed graph structure."
 
+-- | Definition below is a variant of connectGraph (above) that allows an
+-- arbitrary node (with sink characteristics) to be the target of any Destination
+-- references in the provided synthesis graph.
+
+connectGraphWithDestination :: Map Integer Node -> Node -> Graph -> IO ()
+connectGraphWithDestination m d (Source (RefToNode _)) = return ()
+connectGraphWithDestination m d (SourceSink (RefToNode to) from) = do
+  connect (m!getNodeId from) $ m!to
+  connectGraphWithDestination m d from
+connectGraphWithDestination m d (Sink (RefToNode _) from) = do -- ** only sink (not counting parameters) is destination, so ignoring RefToNode value
+  connect (m!getNodeId from) d
+  connectGraphWithDestination m d from
+connectGraphWithDestination m d (Sink (RefToParamOfNode to paramName) from) = do
+  let param = audioParamNode (m!to) paramName
+  connect (m!getNodeId from) param
+  connectGraphWithDestination m d from
+connectGraphWithDestination _ _ _ = error "Malformed graph structure."
+
 instantiateChange :: Change -> Time -> Node -> IO ()
 instantiateChange (SetValue _ paramName val endTime) startTime node =
   setParamValueAtTime node paramName val $ startTime + endTime
@@ -65,9 +83,21 @@ disconnectOnStop ns = case (find isSourceNode ns) of
     putStrLn "Warning: synthstance played with no source"
     return ()
 
+instantiateSynthWithDestination :: WebAudioContext -> Synth a -> Node -> IO Synthstance
+instantiateSynthWithDestination ctx x dest = do
+  ns <- mapM (instantiateNode ctx) $ env x
+  mapM_ (connectGraphWithDestination ns dest) $ snd (graphs x)
+  disconnectOnStop ns
+  return $ Synthstance {
+    synth = x >> return (),
+    audioContext = ctx,
+    nodes = ns,
+    nodeChanges = fmap (\c -> (getNodeId $ node c, instantiateChange c)) (changes x),
+    started = False
+  }
+
 instantiateSynth :: WebAudioContext -> Synth a -> IO Synthstance
 instantiateSynth ctx x = do
-  -- ctx <- globalAudioContext
   ns <- mapM (instantiateNode ctx) $ env x
   mapM_ (connectGraph ns) $ snd (graphs x)
   disconnectOnStop ns
