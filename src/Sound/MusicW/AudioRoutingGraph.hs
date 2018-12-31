@@ -5,7 +5,9 @@ import GHCJS.Prim(toJSString)
 import GHCJS.Marshal.Pure
 import GHCJS.Foreign.Callback
 
-newtype WebAudioContext = WebAudioContext JSVal
+newtype WebAudioContext = WebAudioContext { audioContextJSVal :: JSVal } -- pre-deprecated: will be just 'AudioContext'
+type AudioContext = WebAudioContext
+
 newtype AudioParam = AudioParam JSVal
 newtype AudioBuffer = AudioBuffer JSVal
 newtype Float32Array = Float32Array JSVal
@@ -48,6 +50,9 @@ foreign import javascript safe
   \    window.___ac = new (window.AudioContext || window.webkitAudioContext)();\
   \} $r = window.___ac;"
   js_setupGlobalAudioContext :: IO WebAudioContext
+
+getAudioContext :: IO AudioContext
+getAudioContext = js_setupGlobalAudioContext
 
 foreign import javascript safe
   "$1.currentTime"
