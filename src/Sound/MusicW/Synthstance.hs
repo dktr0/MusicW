@@ -1,5 +1,6 @@
 module Sound.MusicW.Synthstance (
   instantiateSynth,
+  instantiateSynthWithDestination,
   startSynth,
   startSynthNow,
   stopSynth,
