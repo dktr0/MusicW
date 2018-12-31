@@ -65,9 +65,9 @@ disconnectOnStop ns = case (find isSourceNode ns) of
     putStrLn "Warning: synthstance played with no source"
     return ()
 
-instantiateSynth :: Synth a -> IO Synthstance
-instantiateSynth x = do
-  ctx <- globalAudioContext
+instantiateSynth :: AudioContext -> Synth a -> IO Synthstance
+instantiateSynth ctx x = do
+  -- ctx <- globalAudioContext
   ns <- mapM (instantiateNode ctx) $ env x
   mapM_ (connectGraph ns) $ snd (graphs x)
   disconnectOnStop ns
