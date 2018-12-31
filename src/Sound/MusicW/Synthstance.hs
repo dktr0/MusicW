@@ -109,5 +109,5 @@ stopSynthNow inst = do
 restartSynth :: Time -> Synthstance -> IO Synthstance
 restartSynth time inst = do
   stopSynth time inst
-  inst' <- instantiateSynth $ synth inst
+  inst' <- instantiateSynth (audioContext inst ) (synth inst)
   startSynth time inst'
