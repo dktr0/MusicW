@@ -4,6 +4,7 @@ import GHCJS.Types
 import GHCJS.Prim(toJSString)
 import GHCJS.Marshal.Pure
 import GHCJS.Foreign.Callback
+import Data.Time
 
 newtype WebAudioContext = WebAudioContext { audioContextJSVal :: JSVal } -- pre-deprecated: will be just 'AudioContext'
 type AudioContext = WebAudioContext
@@ -58,6 +59,18 @@ foreign import javascript safe
   "$1.currentTime"
   js_currentTime :: WebAudioContext -> IO Double
   -- time in seconds
+
+-- | Get the current audio time but cast it to a UTCTime for easier interoperation
+-- with the standard Haskell time module. Note that the approach here might not work
+-- if the audio context runs for more than one day.
+
+getAudioTime :: AudioContext -> IO UTCTime
+getAudioTime ctx = do
+  x <- js_currentTime ctx
+  return $ UTCTime {
+    utctDay = toEnum 0,
+    utctDayTime = realToFrac x -- *** this might not work if audio context runs for more than one day...
+  }
 
 foreign import javascript safe
   "$1.sampleRate"
