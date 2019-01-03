@@ -62,10 +62,10 @@ startSynth t0 s = do
   mapM_ (scheduleChange (nodes s) t0) $ changes (spec s)
 
 scheduleChange :: AudioIO m => [Node] -> Double -> Change -> m ()
-scheduleChange ns t0 (SetValue (ParamRef i pType) v t) = void $ setParamValueAtTime (ns!!i) (show pType) v (t0+t)
-scheduleChange ns t0 (LinearRampToValue (ParamRef i pType) v t) = void $ linearRampToParamValueAtTime (ns!!i) (show pType) v (t0+t)
-scheduleChange ns t0 (ExponentialRampToValue (ParamRef i pType) v t) = void $ exponentialRampToParamValueAtTime (ns!!i) (show pType) v (t0+t)
-scheduleChange ns t0 (CurveToValue (ParamRef i pType) curve t dur) = void $ setParamValueCurveAtTime (ns!!i) (show pType) curve (t0+t) dur
+scheduleChange ns t0 (SetValue (ParamRef i pType) v t) = void $ setValueAtTime (ns!!i) (show pType) v (t0+t)
+scheduleChange ns t0 (LinearRampToValue (ParamRef i pType) v t) = void $ linearRampToValueAtTime (ns!!i) (show pType) v (t0+t)
+scheduleChange ns t0 (ExponentialRampToValue (ParamRef i pType) v t) = void $ exponentialRampToValueAtTime (ns!!i) (show pType) v (t0+t)
+scheduleChange ns t0 (CurveToValue (ParamRef i pType) curve t dur) = void $ setValueCurveAtTime (ns!!i) (show pType) curve (t0+t) dur
 scheduleChange _ _ _ = error "scheduleChange targeted non-ParamRef node"
 
 startSynthNow :: AudioIO m => Synth m -> m ()

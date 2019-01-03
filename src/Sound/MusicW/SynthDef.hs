@@ -138,22 +138,22 @@ out input = connect input DestinationRef
 -- inconsistent but is intended to facilitate common use cases where these
 -- definitions are chained together.
 
-connectToParam :: AudioIO m => ParamType -> NodeRef -> NodeRef -> SynthDef m ()
-connectToParam pType (NodeRef i) input = connect input $ ParamRef i pType
-connectToParam _ _ _ = error "connectToParam used with not actual node"
+connectParam :: AudioIO m => ParamType -> NodeRef -> NodeRef -> SynthDef m ()
+connectParam pType (NodeRef i) input = connect input $ ParamRef i pType
+connectParam _ _ _ = error "connectParam used with not actual node"
 
-setParamValue :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
-setParamValue pType v t (NodeRef i) = addChange (SetValue (ParamRef i pType) v t) >> return (NodeRef i)
-setParamValue _ _ _ _ = error "setParamValue used with not actual node"
+setParam :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+setParam pType v t (NodeRef i) = addChange (SetValue (ParamRef i pType) v t) >> return (NodeRef i)
+setParam _ _ _ _ = error "setParam used with not actual node"
 
-linearRampToParamValue :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
-linearRampToParamValue pType v t (NodeRef i) = addChange (LinearRampToValue (ParamRef i pType) v t) >> return (NodeRef i)
-linearRampToParamValue _ _ _ _ = error "linearRampToParamValue used with not actual node"
+linearRampOnParam :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+linearRampOnParam pType v t (NodeRef i) = addChange (LinearRampToValue (ParamRef i pType) v t) >> return (NodeRef i)
+linearRampOnParam _ _ _ _ = error "linearRampOnParam used with not actual node"
 
-exponentialRampToParamValue :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
-exponentialRampToParamValue pType v t (NodeRef i) = addChange (ExponentialRampToValue (ParamRef i pType) v t) >> return (NodeRef i)
-exponentialRampToParamValue _ _ _ _ = error "exponentialRampToParamValue used with not actual node"
+exponentialRampOnParam :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+exponentialRampOnParam pType v t (NodeRef i) = addChange (ExponentialRampToValue (ParamRef i pType) v t) >> return (NodeRef i)
+exponentialRampOnParam _ _ _ _ = error "exponentialRampOnParam used with not actual node"
 
-curveToParamValue :: AudioIO m => ParamType -> [Double] -> Double -> Double -> NodeRef -> SynthDef m NodeRef
-curveToParamValue pType vs t dur (NodeRef i) = addChange (CurveToValue (ParamRef i pType) vs t dur) >> return (NodeRef i)
-curveToParamValue _ _ _ _ _ = error "curveToParamValue used with not actual node"
+curveOnParam :: AudioIO m => ParamType -> [Double] -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+curveOnParam pType vs t dur (NodeRef i) = addChange (CurveToValue (ParamRef i pType) vs t dur) >> return (NodeRef i)
+curveOnParam _ _ _ _ _ = error "curveOnParam used with not actual node"

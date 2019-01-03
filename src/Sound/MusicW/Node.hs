@@ -120,7 +120,7 @@ createDelay :: AudioIO m => Double -> m Node
 createDelay maxT = do
   ctx <- audioContext
   node <- liftIO $ js_createDelay ctx maxT
-  setParamValue node "delayTime" maxT
+  setValue node "delayTime" maxT
   setNodeField node "isSource" True
   setNodeField node "isSink" True
   setNodeField node "startable" False
@@ -129,11 +129,11 @@ createCompressor :: AudioIO m => Double -> Double -> Double -> Double -> Double 
 createCompressor thr kne rat att rel = do
   ctx <- audioContext
   node <- liftIO $ js_createDynamicsCompressor ctx
-  setParamValue node "threshold" thr
-  setParamValue node "knee" kne
-  setParamValue node "ratio" rat
-  setParamValue node "attack" att
-  setParamValue node "release" rel
+  setValue node "threshold" thr
+  setValue node "knee" kne
+  setValue node "ratio" rat
+  setValue node "attack" att
+  setValue node "release" rel
   setNodeField node "isSource" True
   setNodeField node "isSink" True
   setNodeField node "startable" False
@@ -142,7 +142,7 @@ createGain :: AudioIO m => Double -> m Node
 createGain g = do
   ctx <- audioContext
   node <- liftIO $ js_createGain ctx
-  setParamValue node "gain" g
+  setValue node "gain" g
   setNodeField node "isSource" True
   setNodeField node "isSink" True
   setNodeField node "startable" False
@@ -238,55 +238,47 @@ isSinkNode :: Node -> Bool
 isSinkNode n = js_isSink n && (not $ js_isSource n)
 
 
--- Definitions used to set/schedule the values of parameters of nodes
+-- Definitions used to set/schedule the values of fields and parameters of nodes
 
-setParamValue :: AudioIO m => Node -> String -> Double -> m Node
-setParamValue node paramName value = audioTime >>= setParamValueAtTime node paramName value
-
-setParamValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
-setParamValueAtTime node paramName value time = do
-  let param = js_audioParam node $ pToJSVal paramName
-  liftIO $ js_setParamValueAtTime param value time
-  return node
-
-linearRampToParamValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
-linearRampToParamValueAtTime node paramName value time = do
-  let param = js_audioParam node $ pToJSVal paramName
-  liftIO $ js_linearRampToParamValueAtTime param value time
-  return node
-
-exponentialRampToParamValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
-exponentialRampToParamValueAtTime node paramName value time = do
-  let param = js_audioParam node $ pToJSVal paramName
-  liftIO $ js_exponentialRampToParamValueAtTime param value time
-  return node
-
-setParamValueCurveAtTime :: AudioIO m => Node -> String -> [Double] -> Double -> Double -> m Node
-setParamValueCurveAtTime node paramName curve startTime duration = do
-  curveArray <- liftIO $ toJSArray $ fmap pToJSVal curve
-  typedCurveArray <- liftIO $ js_typedArrayFromArray curveArray
-  let param = js_audioParam node $ pToJSVal paramName
-  liftIO $ js_setParamValueCurveAtTime param typedCurveArray startTime duration
+setNodeField :: (AudioIO m, PToJSVal a) => Node -> String -> a -> m Node
+setNodeField node field val = do
+  ctx <- audioContext
+  liftIO $ js_setField (pToJSVal node) (pToJSVal field) (pToJSVal val)
   return node
 
 setFrequency :: AudioIO m => Node -> Double -> m Node
-setFrequency node f = do
-  ctx <- audioContext
-  liftIO $ js_setParamValue (js_audioParam node $ pToJSVal "frequency") f ctx
-  return node
+setFrequency node = setValue node "frequency"
 
 setGain :: AudioIO m => Node -> Double -> m Node
-setGain node g = do
-  ctx <- audioContext
-  liftIO $ js_setParamValue (js_audioParam node $ pToJSVal "gain") g ctx
-  return node
+setGain node = setValue node "gain"
 
 setQ :: AudioIO m => Node -> Double -> m Node
-setQ node q = do
-  ctx <- audioContext
-  liftIO $ js_setParamValue (js_audioParam node $ pToJSVal "Q") q ctx
+setQ node = setValue node "Q"
+
+setValue :: AudioIO m => Node -> String -> Double -> m Node
+setValue node paramName value = audioTime >>= setValueAtTime node paramName value
+
+setValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
+setValueAtTime node paramName value time = do
+  liftIO $ js_setValueAtTime node (pToJSVal paramName) value time
   return node
 
+linearRampToValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
+linearRampToValueAtTime node paramName value time = do
+  liftIO $ js_linearRampToValueAtTime node (pToJSVal paramName) value time
+  return node
+
+exponentialRampToValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
+exponentialRampToValueAtTime node paramName value time = do
+  liftIO $ js_exponentialRampToValueAtTime node (pToJSVal paramName) value time
+  return node
+
+setValueCurveAtTime :: AudioIO m => Node -> String -> [Double] -> Double -> Double -> m Node
+setValueCurveAtTime node paramName curve startTime duration = do
+  curveArray <- liftIO $ toJSArray $ fmap pToJSVal curve
+  typedCurveArray <- liftIO $ js_typedArrayFromArray curveArray
+  liftIO $ js_setValueCurveAtTime node (pToJSVal paramName) typedCurveArray startTime duration
+  return node
 
 onended :: Node -> (JSVal -> IO ()) -> IO ()
 onended n cb = do
@@ -363,34 +355,24 @@ foreign import javascript unsafe
   js_onaudioprocess :: Node -> Callback (JSVal -> IO ()) -> IO ()
 
 foreign import javascript unsafe
-  "$1.setValueAtTime($2, $3.currentTime);"
-  js_setParamValue :: JSVal -> Double -> AudioContext -> IO ()
+  "$1.$2.setValueAtTime($3, $4);"
+  js_setValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
 
 foreign import javascript unsafe
-  "$1.setValueAtTime($2, $3);"
-  js_setParamValueAtTime :: JSVal -> Double -> Double -> IO ()
+  "$1.$2.linearRampToValueAtTime($3, $4);"
+  js_linearRampToValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
 
 foreign import javascript unsafe
-  "$1.linearRampToValueAtTime($2, $3);"
-  js_linearRampToParamValueAtTime :: JSVal -> Double -> Double -> IO ()
+  "$1.$2.exponentialRampToValueAtTime($3, $4);"
+  js_exponentialRampToValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
 
 foreign import javascript unsafe
-  "$1.exponentialRampToValueAtTime($2, $3);"
-  js_exponentialRampToParamValueAtTime :: JSVal -> Double -> Double -> IO ()
-
-foreign import javascript unsafe
-  "$1.setValueCurveAtTime($2, $3, $4);"
-  js_setParamValueCurveAtTime :: JSVal -> Float32Array -> Double -> Double -> IO ()
+  "$1.$2.setValueCurveAtTime($3, $4, $5);"
+  js_setValueCurveAtTime :: Node -> JSVal -> Float32Array -> Double -> Double -> IO ()
 
 foreign import javascript unsafe
   "$1[$2] = $3;"
   js_setField :: JSVal -> JSVal -> JSVal -> IO ()
-
-setNodeField :: (AudioIO m, PToJSVal a) => Node -> String -> a -> m Node
-setNodeField node field val = do
-  ctx <- audioContext
-  liftIO $ js_setField (pToJSVal node) (pToJSVal field) (pToJSVal val)
-  return node
 
 foreign import javascript unsafe
   "$1.offset.value = $2"

@@ -6,17 +6,17 @@ import Sound.MusicW.SynthDef
 ampEnv :: AudioIO m => Double -> Double -> Double -> Double -> Double -> NodeRef -> SynthDef m NodeRef
 ampEnv a d s st r input = do
   g <- gain 0.0 input
-  linearRampToParamValue Gain 1.0 a g
-  exponentialRampToParamValue Gain s (a+d) g
-  setParamValue Gain s (a+d+st) g
-  linearRampToParamValue Gain 0.0 (a+d+st+r) g
+  linearRampOnParam Gain 1.0 a g
+  exponentialRampOnParam Gain s (a+d) g
+  setParam Gain s (a+d+st) g
+  linearRampOnParam Gain 0.0 (a+d+st+r) g
 
 asr :: AudioIO m => Double -> Double -> Double -> Double -> NodeRef -> SynthDef m NodeRef
 asr a s r amp input = do
   g <- gain 0.0 input
-  linearRampToParamValue Gain amp a g
-  setParamValue Gain amp (a+s) g
-  linearRampToParamValue Gain 0 (a+s+r) g
+  linearRampOnParam Gain amp a g
+  setParam Gain amp (a+s) g
+  linearRampOnParam Gain 0 (a+s+r) g
 
 rectEnv :: AudioIO m => Double -> Double -> Double -> NodeRef -> SynthDef m NodeRef
 rectEnv ar s amp = asr ar s ar amp
