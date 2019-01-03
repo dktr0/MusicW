@@ -1,276 +1,417 @@
-module Sound.MusicW.Node (
-  WebAudioContext,
-  Node(..),
-  isSourceNode,
-  isSinkNode,
-  globalAudioContext,
-  getCurrentTime,
-  instantiateSourceNode,
-  instantiateSourceSinkNode,
-  instantiateSinkNode,
-  audioParamNode,
-  connect,
-  disconnect,
-  disconnectAll,
-  start,
-  stop,
-  onended,
-  setParamValueAtTime,
-  linearRampToParamValueAtTime,
-  exponentialRampToParamValueAtTime,
-  setParamValueCurveAtTime
-) where
+{-# LANGUAGE JavaScriptFFI #-}
+module Sound.MusicW.Node where
 
-import Sound.MusicW.AudioRoutingGraph hiding (Buffer)
-import Sound.MusicW.Spec
+import GHCJS.Types
 import GHCJS.Marshal.Pure
-import GHCJS.Foreign.Callback(asyncCallback1, releaseCallback)
-import GHCJS.Prim(JSVal, toJSArray, toJSString, fromJSInt, getProp)
-import GHCJS.Types(nullRef)
-import Control.Monad
+import GHCJS.Prim (toJSArray)
+import GHCJS.Foreign.Callback(Callback, asyncCallback1, releaseCallback)
+import Control.Monad.IO.Class
 
-data Node
-  -- Source nodes
-  = AudioBufferSourceNode { jsval :: JSVal, bufferParams :: BufferParams }  -- Also needs playbackParams b.c. some playback properties are only specified when you call 'start()' on that node
-  | ConstantNode { jsval :: JSVal }
-  | OscillatorNode { jsval :: JSVal }
-  -- SourceSink nodes
-  | BiquadFilterNode { jsval :: JSVal }
-  | ConvolverNode { jsval :: JSVal }
-  | DelayNode { jsval :: JSVal }
-  | DynamicsCompressorNode { jsval :: JSVal }
-  | GainNode { jsval :: JSVal }
-  | WaveShaperNode { jsval :: JSVal }
-  | ScriptProcessorNode { jsval :: JSVal }
-  -- Sink nodes
-  | DestinationNode { jsval :: JSVal }
-  | AudioParamNode { jsval :: JSVal }
+import Sound.MusicW.AudioContext
+import Sound.MusicW.AudioBuffer
+import Sound.MusicW.FloatArraySpec
 
-instance Show Node where
-  show (AudioBufferSourceNode _ _) = "AudioBufferSourceNode"
-  show (ConstantNode _) = "ConstantNode"
-  show (OscillatorNode _) = "OscillatorNode"
-  show (BiquadFilterNode _) = "BiquadFilterNode"
-  show (ConvolverNode _) = "ConvolverNode"
-  show (DelayNode _) = "DelayNode"
-  show (DynamicsCompressorNode _) = "DynamicsCompressorNode"
-  show (GainNode _) = "GainNode"
-  show (WaveShaperNode _) = "WaveShaperNode"
-  show (ScriptProcessorNode _) = "ScriptProcessorNode"
-  show (DestinationNode _) = "DestinationNode"
-  show (AudioParamNode _) = "AudioParamNode"
+-- | A Node is an instantiated and wrapped node from the Web Audio API, or it is
+-- a settable parameter of such a node. Nodes can potentially be connected and
+-- disconnected to/from each other, started, stopped, and can have values/ramps/curves
+-- scheduled on their parameters.
+
+newtype Node = Node JSVal
+
+instance PToJSVal Node where pToJSVal (Node j) = j
+
+instance PFromJSVal Node where pFromJSVal = Node
+
+instance Show Node where show _ = "a Node"
+
+createConstantSource :: AudioIO m => Double -> m Node
+createConstantSource v = do
+  ctx <- audioContext
+  node <- liftIO $ js_createConstantSource ctx
+  liftIO $ js_setConstantOffset node v
+  setNodeField node "isSource" True
+  setNodeField node "isSink" False
+  setNodeField node "startable" False
+
+data OscillatorType
+  = Sine
+  | Square
+  | Sawtooth
+  | Triangle
+  deriving (Show, Eq)
+
+instance PToJSVal OscillatorType where
+  pToJSVal Sine = pToJSVal "sine"
+  pToJSVal Square = pToJSVal "square"
+  pToJSVal Sawtooth = pToJSVal "sawtooth"
+  pToJSVal Triangle = pToJSVal "triangle"
+
+createOscillator :: AudioIO m => OscillatorType -> Double -> m Node
+createOscillator t f = do
+  ctx <- audioContext
+  node <- liftIO $ js_createOscillator ctx
+  setNodeField node "type" t
+  setFrequency node f
+  setNodeField node "isSource" True
+  setNodeField node "isSink" False
+  setNodeField node "startable" True
+
+data BufferParams = BufferParams Double Double Bool deriving (Show, Eq)
+
+createAudioBufferSource :: AudioIO m => AudioBuffer -> BufferParams -> m Node
+createAudioBufferSource buf params@(BufferParams loopstart loopend loop) = do
+  ctx <- audioContext
+  node <- liftIO $ js_createBufferSource ctx
+  setNodeField node "buffer" buf
+  setNodeField node "loopstart" loopstart
+  setNodeField node "loopend" loopend
+  setNodeField node "loop" loop
+  setNodeField node "isSource" True
+  setNodeField node "isSink" False
+  setNodeField node "startable" True
+
+data FilterSpec -- first argument always frequency, second argument when two is q or gain, when three: frequency q gain
+  = LowPass Double Double
+  | HighPass Double Double
+  | BandPass Double Double
+  | LowShelf Double Double
+  | HighShelf Double Double
+  | Peaking Double Double Double
+  | Notch Double Double
+  | AllPass Double Double
+  deriving (Show)
+
+-- temp note: filter types: LowPass, HighPass, BandPass,LowShelf,HighShelf,Peaking,Notch,AllPass
+createBiquadFilter :: AudioIO m => FilterSpec -> m Node
+createBiquadFilter spec = do
+  ctx <- audioContext
+  node <- liftIO $ js_createBiquadFilter ctx
+  configureBiquadFilter spec node
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+configureBiquadFilter :: AudioIO m => FilterSpec -> Node -> m Node
+configureBiquadFilter (LowPass f q) n = setNodeField n "type" "lowpass" >> setFrequency n f >> setQ n q
+configureBiquadFilter (HighPass f q) n = setNodeField n "type" "highpass" >> setFrequency n f >> setQ n q
+configureBiquadFilter (BandPass f q) n = setNodeField n "type" "bandpass" >> setFrequency n f >> setQ n q
+configureBiquadFilter (LowShelf f g) n = setNodeField n "type" "lowshelf" >> setFrequency n f >> setGain n g
+configureBiquadFilter (HighShelf f g) n = setNodeField n "type" "highshelf" >> setFrequency n f >> setGain n g
+configureBiquadFilter (Peaking f q g) n = setNodeField n "type" "peaking" >> setFrequency n f >> setQ n q >> setGain n g
+configureBiquadFilter (Notch f q) n = setNodeField n "type" "notch" >> setFrequency n f >> setQ n q
+configureBiquadFilter (AllPass f q) n = setNodeField n "type" "allpass" >> setFrequency n f >> setQ n q
+
+createConvolver :: AudioIO m => Either Float32Array FloatArraySpec -> Bool -> m Node
+createConvolver bufferSpec normalize = do
+  ctx <- audioContext
+  node <- liftIO $ js_createConvolver ctx
+  sr <- sampleRate
+  bufferData <- liftIO $ instantiateArraySpec bufferSpec
+  nSamples <- liftIO $ js_typedArrayLength bufferData
+  buffer <- liftIO $ js_createAudioBuffer 1 nSamples sr ctx -- TODO (?) use a buffer spec instead of array spec (???)
+  liftIO $ js_copyToChannel bufferData 1 buffer
+  setNodeField node "buffer" buffer
+  setNodeField node "normalize" normalize
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False -- ???
+
+createDelay :: AudioIO m => Double -> m Node
+createDelay maxT = do
+  ctx <- audioContext
+  node <- liftIO $ js_createDelay ctx maxT
+  setParamValue node "delayTime" maxT
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+createCompressor :: AudioIO m => Double -> Double -> Double -> Double -> Double -> m Node
+createCompressor thr kne rat att rel = do
+  ctx <- audioContext
+  node <- liftIO $ js_createDynamicsCompressor ctx
+  setParamValue node "threshold" thr
+  setParamValue node "knee" kne
+  setParamValue node "ratio" rat
+  setParamValue node "attack" att
+  setParamValue node "release" rel
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+createGain :: AudioIO m => Double -> m Node
+createGain g = do
+  ctx <- audioContext
+  node <- liftIO $ js_createGain ctx
+  setParamValue node "gain" g
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+data OversampleAmount
+  = NoOversampling
+  | X2Oversampling
+  | X4Oversampling
+  deriving (Show)
+
+instance PToJSVal OversampleAmount where
+  pToJSVal NoOversampling = pToJSVal "none"
+  pToJSVal X2Oversampling = pToJSVal "x2"
+  pToJSVal X4Oversampling = pToJSVal "x4"
+
+createWaveShaper :: AudioIO m => Either Float32Array FloatArraySpec -> OversampleAmount -> m Node
+createWaveShaper curve oversample = do
+  ctx <- audioContext
+  node <- liftIO $ js_createWaveShaper ctx
+  curveArray <- liftIO $ instantiateArraySpec curve
+  setNodeField node "curve" curveArray
+  setNodeField node "oversample" oversample
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+createScriptProcessor :: AudioIO m => Int -> Int -> (JSVal -> IO ()) -> m Node
+createScriptProcessor inChnls outChnls cb = do
+  ctx <- audioContext
+  node <- liftIO $ js_createScriptProcessor ctx inChnls outChnls
+  onaudioprocess <- liftIO $ asyncCallback1 cb
+  liftIO $ js_onaudioprocess node onaudioprocess
+  liftIO $ releaseCallback onaudioprocess
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" True
+
+
+-- | There is no function in the Web Audio API to "create" the context's
+-- destination but we provide one anyway, as a convenient way to get a node
+-- that, like all the other nodes, can be used in connections.
+
+createDestination :: AudioIO m => m Node
+createDestination = do
+  node <- Node <$> destination
+  setNodeField node "isSource" False
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+-- | Similarly, while the control parameters of nodes in the web audio API are distinct
+-- we provide a function here to create a pseudo-node from a parameter of an
+-- existing node. As with the destination (above), a node parameter, like a node,
+-- can be something to which connections are made.
+
+createParameter :: AudioIO m => Node -> String -> m Node
+createParameter node pName = do
+  let node = Node $ js_audioParam node (pToJSVal pName)
+  setNodeField node "isSource" False
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+connectNodes :: AudioIO m => Node -> Node -> m ()
+connectNodes from to
+  | not (js_isSource from) = error $ (show from) ++ " can't be connect source."
+  | not (js_isSink to) = error $ (show to) ++ " can't be connect target."
+  | otherwise   = liftIO $ js_connect from to
+
+disconnectNodes :: AudioIO m => Node -> Node -> m ()
+disconnectNodes from to
+  | not (js_isSource from) = error $ (show from) ++ " can't be disconnect source."
+  | not (js_isSink to) == False = error $ (show to) ++ " can't be disconnect target."
+  | otherwise   = liftIO $ js_disconnect from to
+
+disconnectAll :: Node -> IO () -- note: needs to be IO rather than m because of how disconnectOnStop works
+disconnectAll x
+  | not (js_isSource x) = return ()
+  | otherwise  = liftIO $ js_disconnectAll x
+
+startNode :: AudioIO m => Double -> Node -> m ()
+startNode t x
+  | js_startable x = liftIO $ js_start x t
+  | otherwise  = return ()
+
+stopNode :: AudioIO m => Double -> Node -> m ()
+stopNode t x
+  | js_startable x = liftIO $ js_stop x t
+  | otherwise  = return ()
 
 isSourceNode :: Node -> Bool
-isSourceNode (AudioBufferSourceNode _ _) = True
-isSourceNode (ConstantNode _) = True
-isSourceNode (OscillatorNode _) = True
-isSourceNode _ = False
+isSourceNode n = js_isSource n && (not $ js_isSink n)
 
 isSinkNode :: Node -> Bool
-isSinkNode (DestinationNode _) = True
-isSinkNode (AudioParamNode _) = True
-isSinkNode _ = False
-
-createAudioContext :: IO WebAudioContext
-createAudioContext = js_newAudioContext
-
-globalAudioContext :: IO WebAudioContext
-globalAudioContext = js_setupGlobalAudioContext
-
-getCurrentTime :: WebAudioContext -> IO Time
-getCurrentTime ctx = js_currentTime ctx >>= return . Sec
-
-setFrequencyHz :: JSVal -> Frequency -> WebAudioContext -> IO ()
-setFrequencyHz node f = js_setParamValue (js_audioParam node $ toJSString "frequency") $ inHz f
-
-setGainDb :: JSVal -> Gain -> WebAudioContext -> IO ()
-setGainDb node g = js_setParamValue (js_audioParam node $ toJSString "gain") $ inDb g
-
-setQ :: JSVal -> Double -> WebAudioContext -> IO ()
-setQ node q = js_setParamValue (js_audioParam node $ toJSString "Q") q
+isSinkNode n = js_isSink n && (not $ js_isSource n)
 
 
-instantiateSourceNode :: SourceNodeSpec -> WebAudioContext -> IO Node
-instantiateSourceNode Silent ctx = do
-  sampleRate <- js_sampleRate ctx
-  buffer <- js_createAudioBuffer 1 (ceiling $ sampleRate * 10) sampleRate ctx
-  channelData <- js_channelData buffer 0
-  js_typedArrayFill 0.0 channelData
-  src <- js_createBufferSource ctx
-  setJSField src "buffer" buffer
-  setJSField src "loop" True
-  return $ AudioBufferSourceNode src (BufferParams 0 1 True)
-instantiateSourceNode (Oscillator t f) ctx = do
-  osc <- js_createOscillator ctx
-  setJSField osc "type" t
-  setFrequencyHz osc f ctx
-  return $ OscillatorNode osc
-instantiateSourceNode (AudioBufferSource buffer params@(BufferParams loopstart loopend loop)) ctx = do
-  src <- js_createBufferSource ctx
-  setJSField src "buffer" buffer
-  setJSField src "loopstart" loopstart
-  setJSField src "loopend" loopend
-  setJSField src "loop" loop
-  return $ AudioBufferSourceNode src params
-instantiateSourceNode (Constant x) ctx = do
-  y <- js_createConstantSource ctx
-  setConstantOffset y x
-  return $ ConstantNode y
+-- Definitions used to set/schedule the values of parameters of nodes
 
-instantiateSourceSinkNode :: SourceSinkNodeSpec -> WebAudioContext -> IO Node
-instantiateSourceSinkNode (Filter spec) ctx = do
-  biquadFilter <- js_createBiquadFilter ctx
-  configureBiquadFilterNode spec biquadFilter ctx
-  return $ BiquadFilterNode biquadFilter
-instantiateSourceSinkNode (Convolver bufferSpec normalize) ctx = do
-  convolver <- js_createConvolver ctx
-  sampleRate <- js_sampleRate ctx
-  bufferData <- instantiateArraySpec bufferSpec
-  nSamples <- js_typedArrayLength bufferData
-  buffer <- js_createAudioBuffer 1 nSamples sampleRate ctx -- TODO use a buffer spec instead of array spec
-  js_copyToChannel bufferData 1 buffer
-  js_setField convolver (toJSString "buffer") $ pToJSVal buffer
-  js_setField convolver (toJSString "normalize") $ pToJSVal normalize
-  return $ ConvolverNode convolver
-instantiateSourceSinkNode (Delay t) ctx = do
-  delay <- js_createDelay ctx $ inSec t -- createDelay needs a maxDelayTime
-  js_setParamValue (js_audioParam delay (toJSString "delayTime")) (inSec t) ctx
-  return $ DelayNode delay
-instantiateSourceSinkNode (Compressor thr kne rat att rel) ctx = do
-  comp <- js_createDynamicsCompressor ctx
-  let setProp n v = js_setParamValue (js_audioParam comp (toJSString n)) v ctx
-  setProp "threshold" $ inDb thr
-  setProp "knee" $ inDb kne
-  setProp "ratio" $ inDb rat
-  setProp "attack" $ inSec att
-  setProp "release" $ inSec rel
-  return $ DynamicsCompressorNode comp
-instantiateSourceSinkNode (Gain g) ctx = do
-  gain <- js_createGain ctx
-  js_setParamValue (js_audioParam gain (toJSString "gain")) (inAmp g) ctx
-  return $ GainNode gain
-instantiateSourceSinkNode (WaveShaper curve oversample) ctx = do
-  shaper <- js_createWaveShaper ctx
-  curveArray <- instantiateArraySpec curve
-  js_setField shaper (toJSString "curve") $ pToJSVal curveArray
-  js_setField shaper (toJSString "oversample") $ pToJSVal oversample
-  return $ WaveShaperNode shaper
-instantiateSourceSinkNode (DistortAt amp) ctx = do
-  processor <- js_createScriptProcessor ctx 2 2 -- stereo in and out
-  let clip = inAmp amp
-  onaudioprocess <- asyncCallback1 $ \ape -> do
-    input <- js_apeInputBuffer ape
-    output <- js_apeOutputBuffer ape
-    numSamples <- js_bufferLength input
-    forM_ [0, 1] $ \chan -> do
-      inData <- js_channelData input chan
-      outData <- js_channelData output chan
-      forM_ [0..numSamples] $ \sample -> do
-        val <- js_typedArrayGetAt sample inData
-        js_typedArraySetAt sample (max (-clip) $ min val clip) outData
-  js_onaudioprocess processor onaudioprocess
-  releaseCallback onaudioprocess
-  return $ ScriptProcessorNode processor
+setParamValue :: AudioIO m => Node -> String -> Double -> m Node
+setParamValue node paramName value = audioTime >>= setParamValueAtTime node paramName value
 
-configureBiquadFilterNode :: FilterSpec -> JSVal -> WebAudioContext -> IO ()
-configureBiquadFilterNode (LowPass f q) node ctx =
-  js_setField node (toJSString "type") (toJSString "lowpass") >> setFrequencyHz node f ctx >> setQ node q ctx
-configureBiquadFilterNode (HighPass f q) node ctx =
-  js_setField node (toJSString "type") (toJSString "highpass") >> setFrequencyHz node f ctx >> setQ node q ctx
-configureBiquadFilterNode (BandPass f q) node ctx =
-  js_setField node (toJSString "type") (toJSString "bandpass") >> setFrequencyHz node f ctx >> setQ node q ctx
-configureBiquadFilterNode (LowShelf f g) node ctx =
-  js_setField node (toJSString "type") (toJSString "lowshelf") >> setFrequencyHz node f ctx >> setGainDb node g ctx
-configureBiquadFilterNode (HighShelf f g) node ctx =
-  js_setField node (toJSString "type") (toJSString "highshelf") >> setFrequencyHz node f ctx >> setGainDb node g ctx
-configureBiquadFilterNode (Peaking f q g) node ctx =
-  js_setField node (toJSString "type") (toJSString "peaking") >> setFrequencyHz node f ctx >> setQ node q ctx >> setGainDb node g ctx
-configureBiquadFilterNode (Notch f q) node ctx =
-  js_setField node (toJSString "type") (toJSString "notch") >> setFrequencyHz node f ctx >> setQ node q ctx
-configureBiquadFilterNode (AllPass f q) node ctx =
-  js_setField node (toJSString "type") (toJSString "allpass") >> setFrequencyHz node f ctx >> setQ node q ctx
+setParamValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
+setParamValueAtTime node paramName value time = do
+  let param = js_audioParam node $ pToJSVal paramName
+  liftIO $ js_setParamValueAtTime param value time
+  return node
 
-instantiateArraySpec :: Either Float32Array FloatArraySpec -> IO Float32Array
-instantiateArraySpec (Left f32Arr) = return f32Arr
-instantiateArraySpec (Right spec) = do
-  array <- js_createTypedArray $ arraySpecSize spec
-  fillArray 0 spec array
-  return array
+linearRampToParamValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
+linearRampToParamValueAtTime node paramName value time = do
+  let param = js_audioParam node $ pToJSVal paramName
+  liftIO $ js_linearRampToParamValueAtTime param value time
+  return node
 
-fillArray :: Int -> FloatArraySpec -> Float32Array -> IO ()
-fillArray _ EmptyArray _ = return ()
-fillArray i (Const n x tl) arr = do
-  js_typedArraySetConst i (i + n) x arr
-  fillArray (i + n) tl arr
-fillArray i (Segment xs tl) arr = do
-  jsArray <- toJSArray $ fmap pToJSVal xs
-  len <- fmap fromJSInt $ getProp jsArray "length"
-  js_typedArraySet i jsArray arr
-  fillArray (i + len) tl arr
-fillArray i (Repeated rep xs tl) arr = do
-  jsArray <- toJSArray $ fmap pToJSVal xs
-  len <- fmap fromJSInt $ getProp jsArray "length"
-  forM_ [0..rep-1] $ \it -> js_typedArraySet (i + (it * len)) jsArray arr
-  fillArray (i + (rep * len)) tl arr
+exponentialRampToParamValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
+exponentialRampToParamValueAtTime node paramName value time = do
+  let param = js_audioParam node $ pToJSVal paramName
+  liftIO $ js_exponentialRampToParamValueAtTime param value time
+  return node
 
-instantiateSinkNode :: SinkNodeSpec -> WebAudioContext -> IO Node
-instantiateSinkNode Destination ctx = js_destination ctx >>= return . DestinationNode
+setParamValueCurveAtTime :: AudioIO m => Node -> String -> [Double] -> Double -> Double -> m Node
+setParamValueCurveAtTime node paramName curve startTime duration = do
+  curveArray <- liftIO $ toJSArray $ fmap pToJSVal curve
+  typedCurveArray <- liftIO $ js_typedArrayFromArray curveArray
+  let param = js_audioParam node $ pToJSVal paramName
+  liftIO $ js_setParamValueCurveAtTime param typedCurveArray startTime duration
+  return node
 
-audioParamNode :: Node -> String -> Node
-audioParamNode node paramName =
-  AudioParamNode $ pToJSVal $ js_audioParam (jsval node) (toJSString paramName)
+setFrequency :: AudioIO m => Node -> Double -> m Node
+setFrequency node f = do
+  ctx <- audioContext
+  liftIO $ js_setParamValue (js_audioParam node $ pToJSVal "frequency") f ctx
+  return node
 
-connect :: Node -> Node -> IO ()
-connect from to
-  | isSinkNode from = error $ (show from) ++ " can't be connect source."
-  | isSourceNode to = error $ (show to) ++ " can't be connect target."
-  | otherwise   = js_connect (jsval from) (jsval to)
+setGain :: AudioIO m => Node -> Double -> m Node
+setGain node g = do
+  ctx <- audioContext
+  liftIO $ js_setParamValue (js_audioParam node $ pToJSVal "gain") g ctx
+  return node
 
-disconnect :: Node -> Node -> IO ()
-disconnect from to
-  | isSinkNode from = error $ (show from) ++ " can't be disconnect source."
-  | isSourceNode to = error $ (show to) ++ " can't be disconnect target."
-  | otherwise   = js_disconnect (jsval from) (jsval to)
+setQ :: AudioIO m => Node -> Double -> m Node
+setQ node q = do
+  ctx <- audioContext
+  liftIO $ js_setParamValue (js_audioParam node $ pToJSVal "Q") q ctx
+  return node
 
-disconnectAll :: Node -> IO ()
-disconnectAll x
-  | isSinkNode x = return ()
-  | otherwise  = js_disconnectAll (jsval x)
 
-start :: Time -> Node -> IO ()
-start t x
-  | isSourceNode x = js_start (jsval x) $ inSec t
-  | otherwise  = return ()
-
-stop :: Time -> Node -> IO ()
-stop t x
-  | isSourceNode x = js_stop (jsval x) $ inSec t
-  | otherwise  = return ()
-
-onended :: Node -> (Node -> IO ()) -> IO ()
+onended :: Node -> (JSVal -> IO ()) -> IO ()
 onended n cb = do
-  onend <- asyncCallback1 $ \_ -> cb n
-  js_onended (jsval n) onend
+  let n' = pToJSVal n
+  onend <- asyncCallback1 $ \_ -> cb n'
+  js_onended n onend
   releaseCallback onend
 
-setParamValueAtTime :: Node -> String -> Double -> Time -> IO ()
-setParamValueAtTime node paramName value time = do
-  let param = js_audioParam (jsval node) $ pToJSVal paramName
-  js_setParamValueAtTime param value $ inSec time
 
-linearRampToParamValueAtTime :: Node -> String -> Double -> Time -> IO ()
-linearRampToParamValueAtTime node paramName value time = do
-  let param = js_audioParam (jsval node) $ pToJSVal paramName
-  js_linearRampToParamValueAtTime param value $ inSec time
+-- JS FFI functions (required, but not exported from this module):
 
-exponentialRampToParamValueAtTime :: Node -> String -> Double -> Time -> IO ()
-exponentialRampToParamValueAtTime node paramName value time = do
-  let param = js_audioParam (jsval node) $ pToJSVal paramName
-  js_exponentialRampToParamValueAtTime param value $ inSec time
+foreign import javascript unsafe
+  "$1.createConstantSource()"
+  js_createConstantSource :: AudioContext -> IO Node
 
-setParamValueCurveAtTime :: Node -> String -> [Double] -> Time -> Time -> IO ()
-setParamValueCurveAtTime node paramName curve startTime duration = do
-  curveArray <- toJSArray $ fmap pToJSVal curve
-  typedCurveArray <- js_typedArrayFromArray curveArray
-  let param = js_audioParam (jsval node) $ pToJSVal paramName
-  js_setParamValueCurveAtTime param typedCurveArray (inSec startTime) (inSec duration)
+foreign import javascript unsafe
+  "$1.createOscillator()"
+  js_createOscillator :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createBufferSource()"
+  js_createBufferSource :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createBiquadFilter()"
+  js_createBiquadFilter :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createConvolver()"
+  js_createConvolver :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createDelay($2)"
+  js_createDelay :: AudioContext -> Double -> IO Node
+
+foreign import javascript unsafe
+  "$1.createDynamicsCompressor()"
+  js_createDynamicsCompressor :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createGain()"
+  js_createGain :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createWaveShaper()"
+  js_createWaveShaper :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createScriptProcessor(void 0, $2, $3)"
+  js_createScriptProcessor :: AudioContext -> Int -> Int -> IO Node
+
+foreign import javascript unsafe
+  "$1.connect($2);"
+  js_connect :: Node -> Node -> IO ()
+
+foreign import javascript unsafe
+  "$1.disconnect($2);"
+  js_disconnect :: Node -> Node -> IO ()
+
+foreign import javascript unsafe
+  "$1.disconnect();"
+  js_disconnectAll :: Node -> IO ()
+
+foreign import javascript unsafe
+  "$1.start($2);"
+  js_start :: Node -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1.stop($2);"
+  js_stop :: Node -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1.onaudioprocess = $2;"
+  js_onaudioprocess :: Node -> Callback (JSVal -> IO ()) -> IO ()
+
+foreign import javascript unsafe
+  "$1.setValueAtTime($2, $3.currentTime);"
+  js_setParamValue :: JSVal -> Double -> AudioContext -> IO ()
+
+foreign import javascript unsafe
+  "$1.setValueAtTime($2, $3);"
+  js_setParamValueAtTime :: JSVal -> Double -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1.linearRampToValueAtTime($2, $3);"
+  js_linearRampToParamValueAtTime :: JSVal -> Double -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1.exponentialRampToValueAtTime($2, $3);"
+  js_exponentialRampToParamValueAtTime :: JSVal -> Double -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1.setValueCurveAtTime($2, $3, $4);"
+  js_setParamValueCurveAtTime :: JSVal -> Float32Array -> Double -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1[$2] = $3;"
+  js_setField :: JSVal -> JSVal -> JSVal -> IO ()
+
+setNodeField :: (AudioIO m, PToJSVal a) => Node -> String -> a -> m Node
+setNodeField node field val = do
+  ctx <- audioContext
+  liftIO $ js_setField (pToJSVal node) (pToJSVal field) (pToJSVal val)
+  return node
+
+foreign import javascript unsafe
+  "$1.offset.value = $2"
+  js_setConstantOffset :: Node -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1[$2]"
+  js_audioParam :: Node -> JSVal -> JSVal
+
+foreign import javascript unsafe
+  "$1.onended = $2;"
+  js_onended :: Node -> Callback (JSVal -> IO ()) -> IO ()
+
+foreign import javascript unsafe
+  "$1.isSource"
+  js_isSource :: Node -> Bool
+
+foreign import javascript unsafe
+  "$1.isSink"
+  js_isSink :: Node -> Bool
+
+foreign import javascript unsafe
+  "$1.startable"
+  js_startable :: Node -> Bool

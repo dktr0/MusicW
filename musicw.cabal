@@ -18,15 +18,17 @@ Library
   js-sources:      MusicW.js
   Build-Depends:   base, containers, safe, ghcjs-base, ghcjs-dom, text,
                    array, ghcjs-prim, data-default, transformers, file-embed, time, monad-loops,
-                   json, bytestring
+                   json, bytestring, mtl
   GHC-Options:     -Wall -fwarn-tabs
-  Exposed-modules: Sound.MusicW
-                   Sound.MusicW.AudioRoutingGraph
+  Exposed-modules: Sound.MusicW.AudioContext
+                   Sound.MusicW.FloatArraySpec
+                   Sound.MusicW.AudioBuffer
                    Sound.MusicW.Buffer
-                   Sound.MusicW.Components
-                   Sound.MusicW.Graph
                    Sound.MusicW.Node
-                   Sound.MusicW.Spec
-                   Sound.MusicW.Synthstance
+                   Sound.MusicW.SynthDef
+                   Sound.MusicW.Synth
+                   Sound.MusicW.Envelopes
+                   Sound.MusicW.Transformations
+                   Sound.MusicW
   other-modules:
   default-language: Haskell2010
