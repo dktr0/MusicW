@@ -1,4 +1,5 @@
 module Sound.MusicW.Synth (
+  Synth(..),
   playSynth_,
   playSynth,
   startSynth,
