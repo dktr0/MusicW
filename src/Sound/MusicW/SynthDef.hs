@@ -9,12 +9,15 @@ import Sound.MusicW.AudioBuffer
 import Sound.MusicW.Node
 
 data ParamType
-  = Freq
+  = Frequency
   | Gain
+  | Q
   -- obviously more are needed here...
 
 instance Show ParamType where
-  show Freq = "freq"
+  show Frequency = "frequency"
+  show Gain = "gain"
+  show Q = "Q"
 
 data NodeRef
   = NodeRef Int
@@ -73,8 +76,8 @@ combineDeletionTimes (Just t1) (Just t2) = Just (max t1 t2)
 
 -- definitions for nodes that are only sources (no NodeRefs as arguments)
 
-constant :: AudioIO m => Double -> SynthDef m NodeRef
-constant x = addNodeBuilder $ createConstantSource x
+constantSource :: AudioIO m => Double -> SynthDef m NodeRef
+constantSource x = addNodeBuilder $ createConstantSource x
 
 oscillator :: AudioIO m => OscillatorType -> Double -> SynthDef m NodeRef
 oscillator t f = addNodeBuilder $ createOscillator t f
@@ -132,15 +135,29 @@ scriptProcessor inChnls outChnls cb input = do
 out :: AudioIO m => NodeRef -> SynthDef m ()
 out input = connect input DestinationRef
 
+resink :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
+resink target input = connect input target >> return target
+
+mix :: AudioIO m => [NodeRef] -> SynthDef m NodeRef
+mix [] = constantSource 0 -- placeholder: we should have some kind of null node that translates into nothing for cases like this
+mix (x:[]) = return x
+mix (x:xs) = do
+  y <- gain 1.0 x
+  mapM (\n -> connect n y) xs
+  return y
+
+mixSynthDefs :: AudioIO m => [SynthDef m NodeRef] -> SynthDef m NodeRef
+mixSynthDefs xs = sequence xs >>= mix
+
 -- The final set of definitions here have to do with either connecting signals
 -- to parameters of existing nodes, or setting/scheduling value changes/envelopes
 -- on the parameters of existing nodes. The order of arguments is somewhat
 -- inconsistent but is intended to facilitate common use cases where these
 -- definitions are chained together.
 
-connectParam :: AudioIO m => ParamType -> NodeRef -> NodeRef -> SynthDef m ()
-connectParam pType (NodeRef i) input = connect input $ ParamRef i pType
-connectParam _ _ _ = error "connectParam used with not actual node"
+param :: AudioIO m => ParamType -> NodeRef -> NodeRef -> SynthDef m ()
+param pType (NodeRef i) input = connect input $ ParamRef i pType
+param _ _ _ = error "connectParam used with not actual node"
 
 setParam :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
 setParam pType v t (NodeRef i) = addChange (SetValue (ParamRef i pType) v t) >> return (NodeRef i)
