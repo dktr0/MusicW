@@ -39,6 +39,10 @@ data SynthSpec m = SynthSpec {
   deletionTime :: Maybe Double
   }
 
+instance Show (SynthSpec m) where
+  show x = show (length $ nodeBuilders x) ++ " nodes, connections=" ++ show (connections x)
+    ++ ", changes=" ++ show (changes x) ++ ", deletionTime=" ++ show (deletionTime x)
+
 emptySynthSpec :: SynthSpec m
 emptySynthSpec = SynthSpec {
   nodeBuilders = [],

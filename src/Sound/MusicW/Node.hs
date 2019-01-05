@@ -31,7 +31,7 @@ createConstantSource v = do
   liftIO $ js_setConstantOffset node v
   setNodeField node "isSource" True
   setNodeField node "isSink" False
-  setNodeField node "startable" False
+  setNodeField node "startable" True
 
 data OscillatorType
   = Sine
@@ -54,7 +54,8 @@ createOscillator t f = do
   setFrequency node f
   setNodeField node "isSource" True
   setNodeField node "isSink" False
-  setNodeField node "startable" True
+  temp <- setNodeField node "startable" True
+  return temp
 
 data BufferParams = BufferParams Double Double Bool deriving (Show, Eq)
 
@@ -199,10 +200,10 @@ createDestination = do
 
 createParameter :: AudioIO m => Node -> String -> m Node
 createParameter node pName = do
-  let node = Node $ js_audioParam node (pToJSVal pName)
-  setNodeField node "isSource" False
-  setNodeField node "isSink" True
-  setNodeField node "startable" False
+  let p = Node $ js_audioParam node (pToJSVal pName)
+  setNodeField p "isSource" False
+  setNodeField p "isSink" True
+  setNodeField p "startable" False
 
 connectNodes :: AudioIO m => Node -> Node -> m ()
 connectNodes from to
@@ -355,19 +356,19 @@ foreign import javascript unsafe
   js_onaudioprocess :: Node -> Callback (JSVal -> IO ()) -> IO ()
 
 foreign import javascript unsafe
-  "$1.$2.setValueAtTime($3, $4);"
+  "$1[$2].setValueAtTime($3, $4);"
   js_setValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
 
 foreign import javascript unsafe
-  "$1.$2.linearRampToValueAtTime($3, $4);"
+  "$1[$2].linearRampToValueAtTime($3, $4);"
   js_linearRampToValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
 
 foreign import javascript unsafe
-  "$1.$2.exponentialRampToValueAtTime($3, $4);"
+  "$1[$2].exponentialRampToValueAtTime($3, $4);"
   js_exponentialRampToValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
 
 foreign import javascript unsafe
-  "$1.$2.setValueCurveAtTime($3, $4, $5);"
+  "$1[$2].setValueCurveAtTime($3, $4, $5);"
   js_setValueCurveAtTime :: Node -> JSVal -> Float32Array -> Double -> Double -> IO ()
 
 foreign import javascript unsafe

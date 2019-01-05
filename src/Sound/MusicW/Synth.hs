@@ -22,7 +22,7 @@ data Synth m = Synth {
   spec :: SynthSpec m,
   nodes :: [Node]
   --audioBuffers :: Map Int AudioBuffer, -- TODO restarting a AudioBufferSourceNode needs to replace the buffers
-  }
+  } deriving (Show)
 
 playSynth_ :: AudioIO m => SynthDef m a -> m (Synth m)
 playSynth_ x = execSynthDef x >>= synthSpecToSynth_
