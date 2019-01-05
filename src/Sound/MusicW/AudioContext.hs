@@ -75,6 +75,11 @@ instance AudioIO AudioContextIO where
 runAudioContextIO :: AudioContext -> AudioContextIO a -> IO a
 runAudioContextIO ac acio = (runReaderT acio) ac
 
+liftAudioIO :: MonadIO m => AudioContextIO a -> m a
+liftAudioIO x = do
+  ac <- liftIO $ getGlobalAudioContext
+  liftIO $ runAudioContextIO ac x
+
 -- | Utility functions
 
 dbamp :: Double -> Double
