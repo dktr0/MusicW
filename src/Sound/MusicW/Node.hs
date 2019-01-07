@@ -24,6 +24,29 @@ instance PFromJSVal Node where pFromJSVal = Node
 
 instance Show Node where show _ = "a Node"
 
+data ParamType
+  = Frequency
+  | Gain
+  | Q
+  | DelayTime
+  | Threshold
+  | Knee
+  | CompressionRatio
+  | Attack
+  | Release
+  -- obviously more are needed here...
+
+instance Show ParamType where
+  show Frequency = "frequency"
+  show Gain = "gain"
+  show Q = "Q"
+  show DelayTime = "delayTime"
+  show Threshold = "threshold"
+  show Knee = "knee"
+  show CompressionRatio = "ratio"
+  show Attack = "attack"
+  show Release = "release"
+
 createConstantSource :: AudioIO m => Double -> m Node
 createConstantSource v = do
   ctx <- audioContext
@@ -115,13 +138,13 @@ createConvolver bufferSpec normalize = do
   setNodeField node "normalize" normalize
   setNodeField node "isSource" True
   setNodeField node "isSink" True
-  setNodeField node "startable" False -- ???
+  setNodeField node "startable" False
 
 createDelay :: AudioIO m => Double -> m Node
 createDelay maxT = do
   ctx <- audioContext
   node <- liftIO $ js_createDelay ctx maxT
-  setValue node "delayTime" maxT
+  setValue node DelayTime maxT
   setNodeField node "isSource" True
   setNodeField node "isSink" True
   setNodeField node "startable" False
@@ -130,11 +153,11 @@ createCompressor :: AudioIO m => Double -> Double -> Double -> Double -> Double 
 createCompressor thr kne rat att rel = do
   ctx <- audioContext
   node <- liftIO $ js_createDynamicsCompressor ctx
-  setValue node "threshold" thr
-  setValue node "knee" kne
-  setValue node "ratio" rat
-  setValue node "attack" att
-  setValue node "release" rel
+  setValue node Threshold thr
+  setValue node Knee kne
+  setValue node CompressionRatio rat
+  setValue node Attack att
+  setValue node Release rel
   setNodeField node "isSource" True
   setNodeField node "isSink" True
   setNodeField node "startable" False
@@ -143,7 +166,15 @@ createGain :: AudioIO m => Double -> m Node
 createGain g = do
   ctx <- audioContext
   node <- liftIO $ js_createGain ctx
-  setValue node "gain" g
+  setValue node Gain g
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+createChannelMerger :: AudioIO m => Int -> m Node
+createChannelMerger nChnls = do
+  ctx <- audioContext
+  node <- liftIO $ js_createChannelMerger ctx nChnls
   setNodeField node "isSource" True
   setNodeField node "isSink" True
   setNodeField node "startable" False
@@ -198,9 +229,9 @@ createDestination = do
 -- existing node. As with the destination (above), a node parameter, like a node,
 -- can be something to which connections are made.
 
-createParameter :: AudioIO m => Node -> String -> m Node
-createParameter node pName = do
-  let p = Node $ js_audioParam node (pToJSVal pName)
+createParameter :: AudioIO m => Node -> ParamType -> m Node
+createParameter node pType = do
+  let p = Node $ js_audioParam node (pToJSVal $ show pType)
   setNodeField p "isSource" False
   setNodeField p "isSink" True
   setNodeField p "startable" False
@@ -210,6 +241,12 @@ connectNodes from to
   | not (js_isSource from) = error $ (show from) ++ " can't be connect source."
   | not (js_isSink to) = error $ (show to) ++ " can't be connect target."
   | otherwise   = liftIO $ js_connect from to
+
+connectNodes' :: AudioIO m => Node -> Int -> Node -> Int -> m ()
+connectNodes' fromNode fromChannel toNode toChannel
+  | not (js_isSource fromNode) = error $ (show fromNode) ++ " can't be connect source."
+  | not (js_isSink toNode) = error $ (show toNode) ++ " can't be connect target."
+  | otherwise   = liftIO $ js_connect' fromNode toNode fromChannel toChannel
 
 disconnectNodes :: AudioIO m => Node -> Node -> m ()
 disconnectNodes from to
@@ -248,37 +285,37 @@ setNodeField node field val = do
   return node
 
 setFrequency :: AudioIO m => Node -> Double -> m Node
-setFrequency node = setValue node "frequency"
+setFrequency node = setValue node Frequency
 
 setGain :: AudioIO m => Node -> Double -> m Node
-setGain node = setValue node "gain"
+setGain node = setValue node Gain
 
 setQ :: AudioIO m => Node -> Double -> m Node
-setQ node = setValue node "Q"
+setQ node = setValue node Q
 
-setValue :: AudioIO m => Node -> String -> Double -> m Node
-setValue node paramName value = audioTime >>= setValueAtTime node paramName value
+setValue :: AudioIO m => Node -> ParamType -> Double -> m Node
+setValue node pType value = audioTime >>= setValueAtTime node pType value
 
-setValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
-setValueAtTime node paramName value time = do
-  liftIO $ js_setValueAtTime node (pToJSVal paramName) value time
+setValueAtTime :: AudioIO m => Node -> ParamType -> Double -> Double -> m Node
+setValueAtTime node pType value time = do
+  liftIO $ js_setValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-linearRampToValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
-linearRampToValueAtTime node paramName value time = do
-  liftIO $ js_linearRampToValueAtTime node (pToJSVal paramName) value time
+linearRampToValueAtTime :: AudioIO m => Node -> ParamType -> Double -> Double -> m Node
+linearRampToValueAtTime node pType value time = do
+  liftIO $ js_linearRampToValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-exponentialRampToValueAtTime :: AudioIO m => Node -> String -> Double -> Double -> m Node
-exponentialRampToValueAtTime node paramName value time = do
-  liftIO $ js_exponentialRampToValueAtTime node (pToJSVal paramName) value time
+exponentialRampToValueAtTime :: AudioIO m => Node -> ParamType -> Double -> Double -> m Node
+exponentialRampToValueAtTime node pType value time = do
+  liftIO $ js_exponentialRampToValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-setValueCurveAtTime :: AudioIO m => Node -> String -> [Double] -> Double -> Double -> m Node
-setValueCurveAtTime node paramName curve startTime duration = do
+setValueCurveAtTime :: AudioIO m => Node -> ParamType -> [Double] -> Double -> Double -> m Node
+setValueCurveAtTime node pType curve startTime duration = do
   curveArray <- liftIO $ toJSArray $ fmap pToJSVal curve
   typedCurveArray <- liftIO $ js_typedArrayFromArray curveArray
-  liftIO $ js_setValueCurveAtTime node (pToJSVal paramName) typedCurveArray startTime duration
+  liftIO $ js_setValueCurveAtTime node (pToJSVal $ show pType) typedCurveArray startTime duration
   return node
 
 onended :: Node -> (JSVal -> IO ()) -> IO ()
@@ -324,6 +361,10 @@ foreign import javascript unsafe
   js_createGain :: AudioContext -> IO Node
 
 foreign import javascript unsafe
+  "$1.createChannelMerger($2)"
+  js_createChannelMerger :: AudioContext -> Int -> IO Node
+
+foreign import javascript unsafe
   "$1.createWaveShaper()"
   js_createWaveShaper :: AudioContext -> IO Node
 
@@ -334,6 +375,10 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.connect($2);"
   js_connect :: Node -> Node -> IO ()
+
+foreign import javascript unsafe
+  "$1.connect($2,$3,$4);"
+  js_connect' :: Node -> Node -> Int -> Int -> IO ()
 
 foreign import javascript unsafe
   "$1.disconnect($2);"

@@ -8,19 +8,10 @@ import Sound.MusicW.FloatArraySpec
 import Sound.MusicW.AudioBuffer
 import Sound.MusicW.Node
 
-data ParamType
-  = Frequency
-  | Gain
-  | Q
-  -- obviously more are needed here...
-
-instance Show ParamType where
-  show Frequency = "frequency"
-  show Gain = "gain"
-  show Q = "Q"
-
 data NodeRef
   = NodeRef Int
+  | NodeInputRef Int Int -- for a numbered node, a specific numbered input of that node
+  | NodeOutputRef Int Int -- for a numbered node, a specific numbered input of that node
   | ParamRef Int ParamType
   | DestinationRef
   deriving (Show)
@@ -56,6 +47,9 @@ type SynthDef m a = StateT (SynthSpec m) m a
 execSynthDef :: AudioIO m => SynthDef m a -> m (SynthSpec m)
 execSynthDef x = execStateT x emptySynthSpec
 
+runSynthDef :: AudioIO m => SynthDef m a -> m (a, SynthSpec m)
+runSynthDef x = runStateT x emptySynthSpec
+
 addNodeBuilder :: Monad m => m Node -> SynthDef m NodeRef
 addNodeBuilder x = do
   indexOfNewNode <- gets (length . nodeBuilders)
@@ -64,6 +58,9 @@ addNodeBuilder x = do
 
 connect :: Monad m => NodeRef -> NodeRef -> SynthDef m ()
 connect from to = modify $ \s -> s { connections = connections s ++ [(from,to)] }
+
+connect' (NodeRef fromNode) fromIndex (NodeRef toNode) toIndex = connect (NodeOutputRef fromNode fromIndex) (NodeInputRef toNode toIndex)
+connect' _ _ _ _ = error "unsupported connection type in connect'"
 
 addChange :: Monad m => Change -> SynthDef m ()
 addChange x = modify $ \s -> s { changes = changes s ++ [x] }
@@ -106,6 +103,12 @@ gain x input = do
   connect input y
   return y
 
+channelMerger :: AudioIO m => [NodeRef] -> SynthDef m NodeRef
+channelMerger xs = do
+  y <- addNodeBuilder $ createChannelMerger (length xs)
+  zipWithM_ (\x i -> connect' x 0 y i) xs [0..]
+  return y
+
 convolver :: AudioIO m => Either Float32Array FloatArraySpec -> Bool -> NodeRef -> SynthDef m NodeRef
 convolver spec normalize input = do
   y <- addNodeBuilder $ createConvolver spec normalize
@@ -136,8 +139,11 @@ scriptProcessor inChnls outChnls cb input = do
   connect input y
   return y
 
-out :: AudioIO m => NodeRef -> SynthDef m ()
-out input = connect input DestinationRef
+audioOut :: AudioIO m => NodeRef -> SynthDef m ()
+audioOut input = connect input DestinationRef
+
+audioIn :: AudioIO m => SynthDef m NodeRef
+audioIn = addNodeBuilder $ createGain 1.0
 
 resink :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 resink target input = connect input target >> return target

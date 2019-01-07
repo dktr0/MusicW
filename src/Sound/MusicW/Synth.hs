@@ -1,7 +1,10 @@
 module Sound.MusicW.Synth (
   Synth(..),
-  playSynth_,
   playSynth,
+  playSynthNow,
+  nodeRefToNode,
+  synthDefToSynth,
+  synthDefToSynth_,
   startSynth,
   startSynthNow,
   stopSynth,
@@ -24,16 +27,30 @@ data Synth m = Synth {
   --audioBuffers :: Map Int AudioBuffer, -- TODO restarting a AudioBufferSourceNode needs to replace the buffers
   } deriving (Show)
 
-playSynth_ :: AudioIO m => SynthDef m a -> m (Synth m)
-playSynth_ x = execSynthDef x >>= synthSpecToSynth_
+playSynth :: AudioIO m => Node -> Double -> SynthDef m a -> m (a, Synth m)
+playSynth dest t x = do
+  (a,spec) <- runSynthDef x
+  s <- synthSpecToSynth dest spec
+  startSynth t s
+  return (a,s)
 
-playSynth :: AudioIO m => Node -> SynthDef m a -> m (Synth m)
-playSynth dest x = execSynthDef x >>= synthSpecToSynth dest
+playSynthNow :: AudioIO m => Node -> SynthDef m a -> m (a, Synth m)
+playSynthNow dest x = do
+  (a,spec) <- runSynthDef x
+  s <- synthSpecToSynth dest spec
+  startSynthNow s
+  return (a,s)
 
-synthSpecToSynth_ :: AudioIO m => SynthSpec m -> m (Synth m)
-synthSpecToSynth_ x = do
-  dest <- createDestination
-  synthSpecToSynth dest x
+nodeRefToNode :: AudioIO m => NodeRef -> Synth m -> m Node
+nodeRefToNode (NodeRef i) s = return $ (nodes s)!!i
+nodeRefToNode (ParamRef i pType) s = createParameter ((nodes s)!!i) pType
+nodeRefToNode DestinationRef s = return $ cachedDestination s
+
+synthDefToSynth :: AudioIO m => Node -> SynthDef m a -> m (Synth m)
+synthDefToSynth dest x = execSynthDef x >>= synthSpecToSynth dest
+
+synthDefToSynth_ :: AudioIO m => SynthDef m a -> m (Synth m)
+synthDefToSynth_ x = createDestination >>= (flip synthDefToSynth) x
 
 synthSpecToSynth :: AudioIO m => Node -> SynthSpec m -> m (Synth m)
 synthSpecToSynth dest x = do
@@ -45,7 +62,8 @@ synthSpecToSynth dest x = do
 makeConnections :: AudioIO m => Node -> [Node] -> NodeRef -> NodeRef -> m ()
 makeConnections dest ns (NodeRef from) DestinationRef = connectNodes (ns!!from) dest
 makeConnections _ ns (NodeRef from) (NodeRef to) = connectNodes (ns!!from) (ns!!to)
-makeConnections _ ns (NodeRef from) (ParamRef to pType) = createParameter (ns!!to) (show pType) >>= connectNodes (ns!!from)
+makeConnections _ ns (NodeRef from) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes (ns!!from)
+makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeInputRef toNode toChannel) = connectNodes' (ns!!fromNode) fromChannel (ns!!toNode) toChannel
 makeConnections _ _ _ _ = error "Malformed graph structure."
 
 -- *** Note: there is probably a bug connected to the definition of disconnectOnStop below:
@@ -53,7 +71,7 @@ makeConnections _ _ _ _ = error "Malformed graph structure."
 -- properly cover the case where there are multiple source nodes that end at different times.
 
 disconnectOnStop :: (Foldable t, AudioIO m) => t Node -> m ()
-disconnectOnStop ns = maybe (error "instantiating sourceless Synth") f $ find isSourceNode ns
+disconnectOnStop ns = maybe (return ()) f $ find isSourceNode ns
   where f x = liftIO $ onended x $ \_ -> mapM_ disconnectAll ns
 
 startSynth :: AudioIO m => Double -> Synth m -> m ()
@@ -63,10 +81,10 @@ startSynth t0 s = do
   mapM_ (scheduleChange (nodes s) t0) $ changes (spec s)
 
 scheduleChange :: AudioIO m => [Node] -> Double -> Change -> m ()
-scheduleChange ns t0 (SetValue (ParamRef i pType) v t) = void $ setValueAtTime (ns!!i) (show pType) v (t0+t)
-scheduleChange ns t0 (LinearRampToValue (ParamRef i pType) v t) = void $ linearRampToValueAtTime (ns!!i) (show pType) v (t0+t)
-scheduleChange ns t0 (ExponentialRampToValue (ParamRef i pType) v t) = void $ exponentialRampToValueAtTime (ns!!i) (show pType) v (t0+t)
-scheduleChange ns t0 (CurveToValue (ParamRef i pType) curve t dur) = void $ setValueCurveAtTime (ns!!i) (show pType) curve (t0+t) dur
+scheduleChange ns t0 (SetValue (ParamRef i pType) v t) = void $ setValueAtTime (ns!!i) pType v (t0+t)
+scheduleChange ns t0 (LinearRampToValue (ParamRef i pType) v t) = void $ linearRampToValueAtTime (ns!!i) pType v (t0+t)
+scheduleChange ns t0 (ExponentialRampToValue (ParamRef i pType) v t) = void $ exponentialRampToValueAtTime (ns!!i) pType v (t0+t)
+scheduleChange ns t0 (CurveToValue (ParamRef i pType) curve t dur) = void $ setValueCurveAtTime (ns!!i) pType curve (t0+t) dur
 scheduleChange _ _ _ = error "scheduleChange targeted non-ParamRef node"
 
 startSynthNow :: AudioIO m => Synth m -> m ()

@@ -1,6 +1,7 @@
 module Sound.MusicW.Envelopes where
 
 import Sound.MusicW.AudioContext
+import Sound.MusicW.Node
 import Sound.MusicW.SynthDef
 
 ampEnv :: AudioIO m => Double -> Double -> Double -> Double -> Double -> NodeRef -> SynthDef m NodeRef

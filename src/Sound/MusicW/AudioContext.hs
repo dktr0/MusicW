@@ -37,12 +37,16 @@ foreign import javascript unsafe
 -- if the audio context runs for more than one day.
 
 getAudioUTCTime :: AudioContext -> IO UTCTime
-getAudioUTCTime ctx = do
-  x <- getAudioTime ctx
-  return $ UTCTime {
-    utctDay = toEnum 0,
-    utctDayTime = realToFrac x -- *** this might not work if audio context runs for more than one day...
+getAudioUTCTime ctx = doubleToUTCTime <$> getAudioTime ctx
+
+doubleToUTCTime :: Double -> UTCTime
+doubleToUTCTime x = UTCTime {
+  utctDay = toEnum 0,
+  utctDayTime = realToFrac x -- *** this might not work if audio context runs for more than one day...
   }
+
+utcTimeToDouble :: UTCTime -> Double
+utcTimeToDouble x = {- fromIntegral (fromEnum (utctDay x)) + -} realToFrac (utctDayTime x)
 
 foreign import javascript unsafe
   "$1.sampleRate"
