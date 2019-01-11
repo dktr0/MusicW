@@ -9,6 +9,7 @@ module Sound.MusicW.Synth (
   startSynthNow,
   stopSynth,
   stopSynthNow,
+  disconnectSynth,
   restartSynth
   ) where
 
@@ -99,6 +100,9 @@ stopSynthNow :: AudioIO m => Synth m -> m ()
 stopSynthNow s = do
   t <- audioTime
   stopSynth t s
+
+disconnectSynth :: AudioIO m => Synth m -> IO ()
+disconnectSynth s = mapM_ disconnectAll $ nodes s
 
 restartSynth :: AudioIO m => Double -> Synth m -> m ()
 restartSynth t s = do
