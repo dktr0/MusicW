@@ -46,7 +46,7 @@ doubleToUTCTime x = UTCTime {
   }
 
 utcTimeToDouble :: UTCTime -> Double
-utcTimeToDouble x = {- fromIntegral (fromEnum (utctDay x)) + -} realToFrac (utctDayTime x)
+utcTimeToDouble x = max (realToFrac $ utctDayTime x) 0.0
 
 foreign import javascript unsafe
   "$1.sampleRate"
