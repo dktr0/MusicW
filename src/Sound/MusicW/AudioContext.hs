@@ -4,6 +4,7 @@ module Sound.MusicW.AudioContext where
 
 import GHCJS.Types
 import GHCJS.Marshal.Pure
+import Data.Text
 import Data.Time
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
@@ -31,6 +32,41 @@ foreign import javascript safe
 foreign import javascript unsafe
   "$1.currentTime"
   getAudioTime :: AudioContext -> IO Double
+
+-- State management functions, both a sync and async version
+
+foreign import javascript interruptible
+  "$1.resume().then($c)['catch'](function(e){$c(''+e);});" -- ffi parser treats 'catch' as keyword even in id ctx
+  js_resumeSync :: AudioContext -> IO (JSVal)
+
+foreign import javascript unsafe
+  "$1.resume();"
+  resume :: AudioContext -> IO ()
+
+resumeSync :: AudioContext -> IO (Maybe Text)
+resumeSync ac = pFromJSVal <$> js_resumeSync ac
+
+foreign import javascript interruptible
+  "$1.suspend().then($c)['catch'](function(e){$c(''+e);});" 
+  js_suspendSync :: AudioContext -> IO (JSVal)
+
+foreign import javascript unsafe
+  "$1.suspend();"
+  suspend :: AudioContext -> IO ()
+
+suspendSync :: AudioContext -> IO (Maybe Text)
+suspendSync ac = pFromJSVal <$> js_suspendSync ac
+
+foreign import javascript interruptible
+  "$1.close().then($c)['catch'](function(e){$c(''+e);});"
+  js_closeSync :: AudioContext -> IO (JSVal)
+
+foreign import javascript unsafe
+  "$1.close();"
+  close :: AudioContext -> IO ()
+
+closeSync :: AudioContext -> IO (Maybe Text)
+closeSync ac = pFromJSVal <$> js_closeSync ac
 
 -- | Get the current audio time but cast it to a UTCTime for easier interoperation
 -- with the standard Haskell time module. Note that the approach here might not work
