@@ -2,8 +2,10 @@
 
 module Sound.MusicW.AudioContext where
 
+import GHCJS.DOM.Types (js_eq)
 import GHCJS.Types
 import GHCJS.Marshal.Pure
+import Data.Text
 import Data.Time
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
@@ -13,6 +15,22 @@ newtype AudioContext = AudioContext JSVal
 instance PToJSVal AudioContext where pToJSVal (AudioContext val) = val
 
 instance PFromJSVal AudioContext where pFromJSVal = AudioContext
+
+data AudioContextState = ACRunning | ACSuspended | ACClosed deriving (Show, Eq)
+
+instance PToJSVal AudioContextState where
+  pToJSVal ACRunning = js_acRunning
+  pToJSVal ACSuspended = js_acSuspended
+  pToJSVal ACClosed = js_acClosed
+
+instance PFromJSVal AudioContextState where
+  pFromJSVal x | x `js_eq` js_acRunning = ACRunning
+  pFromJSVal x | x `js_eq` js_acSuspended = ACSuspended
+  pFromJSVal x | x `js_eq` js_acClosed = ACClosed
+
+foreign import javascript unsafe "\"running\"" js_acRunning :: JSVal
+foreign import javascript unsafe "\"suspended\"" js_acSuspended :: JSVal
+foreign import javascript unsafe "\"closed\"" js_acClosed :: JSVal
 
 foreign import javascript safe
   "new (window.AudioContext || window.webkitAudioContext)()"
@@ -31,6 +49,48 @@ foreign import javascript safe
 foreign import javascript unsafe
   "$1.currentTime"
   getAudioTime :: AudioContext -> IO Double
+
+-- State management functions, both a sync and async version
+
+foreign import javascript unsafe
+  "$1.state"
+  js_getState :: AudioContext -> IO JSVal
+
+getState :: AudioContext -> IO AudioContextState
+getState ac = pFromJSVal <$> js_getState ac
+
+foreign import javascript interruptible
+  "$1.resume().then($c)['catch'](function(e){$c(''+e);});" -- ffi parser treats 'catch' as keyword even in id ctx
+  js_resumeSync :: AudioContext -> IO JSVal
+
+foreign import javascript unsafe
+  "$1.resume();"
+  resume :: AudioContext -> IO ()
+
+resumeSync :: AudioContext -> IO (Maybe Text)
+resumeSync ac = pFromJSVal <$> js_resumeSync ac
+
+foreign import javascript interruptible
+  "$1.suspend().then($c)['catch'](function(e){$c(''+e);});" 
+  js_suspendSync :: AudioContext -> IO JSVal
+
+foreign import javascript unsafe
+  "$1.suspend();"
+  suspend :: AudioContext -> IO ()
+
+suspendSync :: AudioContext -> IO (Maybe Text)
+suspendSync ac = pFromJSVal <$> js_suspendSync ac
+
+foreign import javascript interruptible
+  "$1.close().then($c)['catch'](function(e){$c(''+e);});"
+  js_closeSync :: AudioContext -> IO JSVal
+
+foreign import javascript unsafe
+  "$1.close();"
+  close :: AudioContext -> IO ()
+
+closeSync :: AudioContext -> IO (Maybe Text)
+closeSync ac = pFromJSVal <$> js_closeSync ac
 
 -- | Get the current audio time but cast it to a UTCTime for easier interoperation
 -- with the standard Haskell time module. Note that the approach here might not work
