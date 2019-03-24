@@ -394,7 +394,7 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
   "if ($1.___stream == null) {\
-  \  $1.___steam = $1.createMediaStreamDestination(); \
+  \  $1.___stream = $1.createMediaStreamDestination(); \
   \} $r = $1.___stream;"
   js_getContextSharedMediaStreamDestination :: AudioContext -> IO Node
 
