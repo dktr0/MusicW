@@ -224,6 +224,22 @@ createDestination = do
   setNodeField node "isSink" True
   setNodeField node "startable" False
 
+createMediaStreamDestination :: AudioIO m => m Node
+createMediaStreamDestination = do
+  ctx <- audioContext
+  node <- liftIO $ js_createMediaStreamDestination ctx
+  setNodeField node "isSource" False
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+getSharedMediaStreamDestination :: AudioIO m => m Node
+getSharedMediaStreamDestination = do
+  ctx <- audioContext
+  node <- liftIO $ js_getContextSharedMediaStreamDestination ctx
+  setNodeField node "isSource" False
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
 -- | Similarly, while the control parameters of nodes in the web audio API are distinct
 -- we provide a function here to create a pseudo-node from a parameter of an
 -- existing node. As with the destination (above), a node parameter, like a node,
@@ -371,6 +387,16 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.createScriptProcessor(void 0, $2, $3)"
   js_createScriptProcessor :: AudioContext -> Int -> Int -> IO Node
+
+foreign import javascript unsafe
+  "$1.createMediaStreamDestination()"
+  js_createMediaStreamDestination :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "if ($1.___stream == null) {\
+  \  $1.___stream = $1.createMediaStreamDestination(); \
+  \} $r = $1.___stream;"
+  js_getContextSharedMediaStreamDestination :: AudioContext -> IO Node
 
 foreign import javascript unsafe
   "$1.connect($2);"
