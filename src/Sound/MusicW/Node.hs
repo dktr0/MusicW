@@ -215,12 +215,10 @@ createScriptProcessor inChnls outChnls cb = do
 createAudioWorkletNode :: AudioIO m => Int -> Int -> String -> m Node
 createAudioWorkletNode inChnls outChnls workletName = do
   ctx <- audioContext
-  node <- liftIO $ js_createAudioWorkletNode (toJSString workletName)
+  node <- liftIO $ js_createAudioWorkletNode ctx (toJSString workletName)
   setNodeField node "isSource" (outChnls > 0)
   setNodeField node "isSink" (inChnls > 0)
   setNodeField node "startable" False
-
-
 
 -- | There is no function in the Web Audio API to "create" the context's
 -- destination but we provide one anyway, as a convenient way to get a node
@@ -389,7 +387,7 @@ foreign import javascript unsafe
   "$1.createChannelMerger($2)"
   js_createChannelMerger :: AudioContext -> Int -> IO Node
 
- foreign import javascript unsafe
+foreign import javascript unsafe
   "$1.createWaveShaper()"
   js_createWaveShaper :: AudioContext -> IO Node
 
