@@ -9,3 +9,4 @@ import Sound.MusicW.SynthDef as E
 import Sound.MusicW.Synth as E
 import Sound.MusicW.Envelopes as E
 import Sound.MusicW.Transformations as E
+import Sound.MusicW.Worklets as E
