@@ -59,6 +59,7 @@ addNodeBuilder x = do
 connect :: Monad m => NodeRef -> NodeRef -> SynthDef m ()
 connect from to = modify $ \s -> s { connections = connections s ++ [(from,to)] }
 
+connect' :: Monad m => NodeRef -> Int -> NodeRef -> Int -> SynthDef m ()
 connect' (NodeRef fromNode) fromIndex (NodeRef toNode) toIndex = connect (NodeOutputRef fromNode fromIndex) (NodeInputRef toNode toIndex)
 connect' _ _ _ _ = error "unsupported connection type in connect'"
 
@@ -139,12 +140,12 @@ scriptProcessor inChnls outChnls cb input = do
   connect input y
   return y
 
-audioWorklet :: AudioIO m => Int -> Int -> String -> NodeRef -> SynthDef m NodeRef
-audioWorklet inChnls outChnls workletName input = do
-  y <- addNodeBuilder $ createAudioWorkletNode inChnls outChnls workletName
-  connect input y
+audioWorklet :: AudioIO m => String -> [NodeRef] -> SynthDef m NodeRef
+audioWorklet workletName inputs = do
+  y <- addNodeBuilder $ createAudioWorkletNode (length inputs) 1 workletName
+  zipWithM (\x n -> connect' x 0 y n) inputs [0..]
   return y
-  
+
 audioOut :: AudioIO m => NodeRef -> SynthDef m ()
 audioOut input = connect input DestinationRef
 
