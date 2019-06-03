@@ -215,7 +215,7 @@ createScriptProcessor inChnls outChnls cb = do
 createAudioWorkletNode :: AudioIO m => Int -> Int -> String -> m Node
 createAudioWorkletNode inChnls outChnls workletName = do
   ctx <- audioContext
-  node <- liftIO $ js_createAudioWorkletNode ctx (toJSString workletName)
+  node <- liftIO $ js_createAudioWorkletNode ctx (toJSString workletName) inChnls outChnls
   setNodeField node "isSource" (outChnls > 0)
   setNodeField node "isSink" (inChnls > 0)
   setNodeField node "startable" False
@@ -403,8 +403,8 @@ foreign import javascript safe
   js_audioWorkletAddModule :: AudioContext -> JSVal -> IO ()
 
 foreign import javascript safe
-  "new AudioWorkletNode($1, $2)"
-  js_createAudioWorkletNode :: AudioContext -> JSVal -> IO Node
+  "new AudioWorkletNode($1, $2, { numberOfInputs: $3, numberOfOutputs: $4 } )"
+  js_createAudioWorkletNode :: AudioContext -> JSVal -> Int -> Int -> IO Node
 
 foreign import javascript unsafe
   "$1.createMediaStreamDestination()"
