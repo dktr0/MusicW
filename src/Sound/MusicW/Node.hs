@@ -212,14 +212,6 @@ createScriptProcessor inChnls outChnls cb = do
   setNodeField node "isSink" True
   setNodeField node "startable" True
 
-createAudioWorkletNode :: AudioIO m => Int -> Int -> String -> m Node
-createAudioWorkletNode inChnls outChnls workletName = do
-  ctx <- audioContext
-  node <- liftIO $ js_createAudioWorkletNode ctx (toJSString workletName) inChnls outChnls
-  setNodeField node "isSource" (outChnls > 0)
-  setNodeField node "isSink" (inChnls > 0)
-  setNodeField node "startable" False
-
 -- | There is no function in the Web Audio API to "create" the context's
 -- destination but we provide one anyway, as a convenient way to get a node
 -- that, like all the other nodes, can be used in connections.
@@ -394,17 +386,6 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.createScriptProcessor(void 0, $2, $3)"
   js_createScriptProcessor :: AudioContext -> Int -> Int -> IO Node
-
-audioWorkletAddModule :: AudioContext -> String -> IO ()
-audioWorkletAddModule ctx url = js_audioWorkletAddModule ctx (toJSString url) 
-
-foreign import javascript safe
-  "$1.audioWorklet.addModule($2);"
-  js_audioWorkletAddModule :: AudioContext -> JSVal -> IO ()
-
-foreign import javascript safe
-  "new AudioWorkletNode($1, $2, { numberOfInputs: $3, numberOfOutputs: $4 } )"
-  js_createAudioWorkletNode :: AudioContext -> JSVal -> Int -> Int -> IO Node
 
 foreign import javascript unsafe
   "$1.createMediaStreamDestination()"

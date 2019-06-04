@@ -140,12 +140,6 @@ scriptProcessor inChnls outChnls cb input = do
   connect input y
   return y
 
-audioWorklet :: AudioIO m => String -> [NodeRef] -> SynthDef m NodeRef
-audioWorklet workletName inputs = do
-  y <- addNodeBuilder $ createAudioWorkletNode (length inputs) 1 workletName
-  zipWithM (\x n -> connect' x 0 y n) inputs [0..]
-  return y
-
 audioOut :: AudioIO m => NodeRef -> SynthDef m ()
 audioOut input = connect input DestinationRef
 
