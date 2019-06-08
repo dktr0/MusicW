@@ -15,7 +15,7 @@ module Sound.MusicW.Synth (
 
 import Data.Foldable (find)
 import Control.Monad (void)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.IO.Class
 
 import Sound.MusicW.AudioContext
 import Sound.MusicW.Node
@@ -93,15 +93,13 @@ startSynthNow s = do
   t <- audioTime
   startSynth (t + 0.050) s
 
-stopSynth :: AudioIO m => Double -> Synth m -> m ()
+stopSynth :: MonadIO m => Double -> Synth m -> m ()
 stopSynth t s = mapM_ (stopNode t) $ nodes s
 
-stopSynthNow :: AudioIO m => Synth m -> m ()
-stopSynthNow s = do
-  t <- audioTime
-  stopSynth t s
+stopSynthNow :: MonadIO m => Synth m -> IO ()
+stopSynthNow s = mapM_ stopNodeNow $ nodes s
 
-disconnectSynth :: AudioIO m => Synth m -> IO ()
+disconnectSynth :: MonadIO m => Synth m -> IO ()
 disconnectSynth s = mapM_ disconnectAll $ nodes s
 
 restartSynth :: AudioIO m => Double -> Synth m -> m ()

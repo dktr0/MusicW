@@ -244,45 +244,50 @@ getSharedMediaStreamDestination = do
 -- existing node. As with the destination (above), a node parameter, like a node,
 -- can be something to which connections are made.
 
-createParameter :: AudioIO m => Node -> ParamType -> m Node
+createParameter :: MonadIO m => Node -> ParamType -> m Node
 createParameter node pType = do
   let p = Node $ js_audioParam node (pToJSVal $ show pType)
   setNodeField p "isSource" False
   setNodeField p "isSink" True
   setNodeField p "startable" False
 
-connectNodes :: AudioIO m => Node -> Node -> m ()
+connectNodes :: MonadIO m => Node -> Node -> m ()
 connectNodes from to
   | not (js_isSource from) = error $ (show from) ++ " can't be connect source."
   | not (js_isSink to) = error $ (show to) ++ " can't be connect target."
   | otherwise   = liftIO $ js_connect from to
 
-connectNodes' :: AudioIO m => Node -> Int -> Node -> Int -> m ()
+connectNodes' :: MonadIO m => Node -> Int -> Node -> Int -> m ()
 connectNodes' fromNode fromChannel toNode toChannel
   | not (js_isSource fromNode) = error $ (show fromNode) ++ " can't be connect source."
   | not (js_isSink toNode) = error $ (show toNode) ++ " can't be connect target."
   | otherwise   = liftIO $ js_connect' fromNode toNode fromChannel toChannel
 
-disconnectNodes :: AudioIO m => Node -> Node -> m ()
+disconnectNodes :: MonadIO m => Node -> Node -> m ()
 disconnectNodes from to
   | not (js_isSource from) = error $ (show from) ++ " can't be disconnect source."
   | not (js_isSink to) == False = error $ (show to) ++ " can't be disconnect target."
   | otherwise   = liftIO $ js_disconnect from to
 
-disconnectAll :: Node -> IO () -- note: needs to be IO rather than m because of how disconnectOnStop works
+disconnectAll :: MonadIO m => Node -> m ()
 disconnectAll x
   | not (js_isSource x) = return ()
   | otherwise  = liftIO $ js_disconnectAll x
 
-startNode :: AudioIO m => Double -> Node -> m ()
+startNode :: MonadIO m => Double -> Node -> m ()
 startNode t x
   | js_startable x = liftIO $ js_start x t
   | otherwise  = return ()
 
-stopNode :: AudioIO m => Double -> Node -> m ()
+stopNode :: MonadIO m => Double -> Node -> m ()
 stopNode t x
   | js_startable x = liftIO $ js_stop x t
   | otherwise  = return ()
+
+stopNodeNow :: MonadIO m => Node -> m ()
+stopNodeNow x
+  | js_startable x = liftIO $ js_stopNow x
+  | otherwise = return ()
 
 isSourceNode :: Node -> Bool
 isSourceNode n = js_isSource n && (not $ js_isSink n)
@@ -293,9 +298,8 @@ isSinkNode n = js_isSink n && (not $ js_isSource n)
 
 -- Definitions used to set/schedule the values of fields and parameters of nodes
 
-setNodeField :: (AudioIO m, PToJSVal a) => Node -> String -> a -> m Node
+setNodeField :: (MonadIO m, PToJSVal a) => Node -> String -> a -> m Node
 setNodeField node field val = do
-  ctx <- audioContext
   liftIO $ js_setField (pToJSVal node) (pToJSVal field) (pToJSVal val)
   return node
 
@@ -311,22 +315,22 @@ setQ node = setValue node Q
 setValue :: AudioIO m => Node -> ParamType -> Double -> m Node
 setValue node pType value = audioTime >>= setValueAtTime node pType value
 
-setValueAtTime :: AudioIO m => Node -> ParamType -> Double -> Double -> m Node
+setValueAtTime :: MonadIO m => Node -> ParamType -> Double -> Double -> m Node
 setValueAtTime node pType value time = do
   liftIO $ js_setValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-linearRampToValueAtTime :: AudioIO m => Node -> ParamType -> Double -> Double -> m Node
+linearRampToValueAtTime :: MonadIO m => Node -> ParamType -> Double -> Double -> m Node
 linearRampToValueAtTime node pType value time = do
   liftIO $ js_linearRampToValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-exponentialRampToValueAtTime :: AudioIO m => Node -> ParamType -> Double -> Double -> m Node
+exponentialRampToValueAtTime :: MonadIO m => Node -> ParamType -> Double -> Double -> m Node
 exponentialRampToValueAtTime node pType value time = do
   liftIO $ js_exponentialRampToValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-setValueCurveAtTime :: AudioIO m => Node -> ParamType -> [Double] -> Double -> Double -> m Node
+setValueCurveAtTime :: MonadIO m => Node -> ParamType -> [Double] -> Double -> Double -> m Node
 setValueCurveAtTime node pType curve startTime duration = do
   curveArray <- liftIO $ toJSArray $ fmap pToJSVal curve
   typedCurveArray <- liftIO $ js_typedArrayFromArray curveArray
@@ -420,6 +424,10 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.stop($2);"
   js_stop :: Node -> Double -> IO ()
+
+foreign import javascript unsafe
+  "$1.stop();"
+  js_stopNow :: Node -> IO ()
 
 foreign import javascript unsafe
   "$1.onaudioprocess = $2;"
