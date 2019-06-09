@@ -11,10 +11,8 @@ import Sound.MusicW.AudioContext
 import Sound.MusicW.Node
 import Sound.MusicW.SynthDef
 
--- note: for any of these functions to work one must have
--- a secure browser context AND one must have
--- called (successfully) audioWorkletAddModule :: AudioContext -> String -> IO ()
--- with the String a URL that points to the location of worklets.js
+-- note: for any of these functions to work one must have a secure browser context
+-- AND one must have called (successfully) addWorklets :: AudioContext -> IO ()
 
 equalWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 equalWorklet in1 in2 = audioWorklet "equal-processor" [in1,in2]
@@ -33,7 +31,19 @@ lessThanWorklet in1 in2 = audioWorklet "lessThan-processor" [in1,in2]
 
 lessThanOrEqualWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 lessThanOrEqualWorklet in1 in2 = audioWorklet "lessThanOrEqual-processor" [in1,in2]
- 
+
+midiCpsWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+midiCpsWorklet x = audioWorklet "midiCps-processor" [x]
+
+cpsMidiWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+cpsMidiWorklet x = audioWorklet "cpsMidi-processor" [x]
+
+ampDbWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+ampDbWorklet x = audioWorklet "ampDb-processor" [x]
+
+dbAmpWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+dbAmpWorklet x = audioWorklet "dbAmp-processor" [x]
+
 
 audioWorklet :: AudioIO m => String -> [NodeRef] -> SynthDef m NodeRef
 audioWorklet workletName inputs = do
@@ -71,7 +81,7 @@ foreign import javascript safe
   "$1.audioWorklet.addModule($2);"
   js_audioWorkletAddModule :: AudioContext -> JSVal -> IO ()
 
-workletsJS :: String  
+workletsJS :: String
 workletsJS = "\
 \ class EqualProcessor extends AudioWorkletProcessor {\
 \  static get parameterDescriptors() {\
@@ -185,5 +195,60 @@ workletsJS = "\
 \    return true;\
 \  }\
 \ }\
-\ registerProcessor('lessThanOrEqual-processor',LessThanOrEqualProcessor);"
-
+\ registerProcessor('lessThanOrEqual-processor',LessThanOrEqualProcessor);\
+\ \
+\ class MidiCpsProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input[0].length; i++) {\
+\      output[0][i] = 440 * (2 ** ((input[0][i]-69)/12));\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('midiCps-processor',MidiCpsProcessor);\
+\ \
+\ class CpsMidiProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input[0].length; i++) {\
+\      output[0][i] = 69 + (12 * (Math.log2(input[0][i]/440)));\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('cpsMidi-processor',CpsMidiProcessor);\
+\ \
+\ class DbAmpProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input[0].length; i++) {\
+\      output[0][i] = 10 ** (input[0][i]/20);\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('dbAmp-processor',DbAmpProcessor);\
+\ \
+\ class AmpDbProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input[0].length; i++) {\
+\      output[0][i] = 20 * Math.log10(input[0][i]);\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('ampDb-processor',AmpDbProcessor);"
