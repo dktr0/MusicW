@@ -44,6 +44,12 @@ ampDbWorklet x = audioWorklet "ampDb-processor" [x]
 dbAmpWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
 dbAmpWorklet x = audioWorklet "dbAmp-processor" [x]
 
+absWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+absWorklet x = audioWorklet "abs-processor" [x]
+
+safeDivideWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
+safeDivideWorklet in1 in2 = audioWorklet "safeDivide-processor" [in1,in2]
+
 
 audioWorklet :: AudioIO m => String -> [NodeRef] -> SynthDef m NodeRef
 audioWorklet workletName inputs = do
@@ -251,4 +257,34 @@ workletsJS = "\
 \    return true;\
 \  }\
 \ }\
-\ registerProcessor('ampDb-processor',AmpDbProcessor);"
+\ registerProcessor('ampDb-processor',AmpDbProcessor);\
+\ \
+\ class AbsProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input[0].length; i++) {\
+\      output[0][i] = Math.abs(input[0][i]);\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('abs-processor',AbsProcessor);\
+\ \
+\ class SafeDivideProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input1 = inputs[0];\
+\    const input2 = inputs[1];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input1[0].length; i++) {\
+\      if(input2[0][i] == 0) output[0][i] = 0;\
+\      else output[0][i] = input1[0][i] / input2[0][i];\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('safeDivide-processor',SafeDivideProcessor);"
