@@ -151,7 +151,6 @@ resink target input = connect input target >> return target
 
 mix :: AudioIO m => [NodeRef] -> SynthDef m NodeRef
 mix [] = constantSource 0 -- placeholder: we should have some kind of null node that translates into nothing for cases like this
-mix (x:[]) = return x
 mix (x:xs) = do
   y <- gain 1.0 x
   mapM (\n -> connect n y) xs
