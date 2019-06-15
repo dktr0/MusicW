@@ -48,6 +48,7 @@ circlePan n pos input = do
 
 splay :: AudioIO m => Int -> [NodeRef] -> SynthDef m NodeRef
 splay n [] = constantSource 0 >>= circlePan n 0
+splay n (i:[]) = circlePan n 0.5 i
 splay n inputs = do
   let i = 1/(fromIntegral $ length inputs - 1)
   let positions = fmap ((*) i) $ take (length inputs) [0..]
