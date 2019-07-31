@@ -17,17 +17,17 @@ data NodeRef
   deriving (Show)
 
 data Change
-  = SetValue { paramRef :: NodeRef , value :: Double, endTime :: Double }
-  | LinearRampToValue { paramRef :: NodeRef , value :: Double, endTime :: Double }
-  | ExponentialRampToValue { paramRef :: NodeRef, value :: Double, endTime :: Double }
-  | CurveToValue { paramRef :: NodeRef, values :: [Double], startTime :: Double, duration :: Double }
+  = SetValue { paramRef :: NodeRef , value :: Double, endTime :: AudioTime }
+  | LinearRampToValue { paramRef :: NodeRef , value :: Double, endTime :: AudioTime }
+  | ExponentialRampToValue { paramRef :: NodeRef, value :: Double, endTime :: AudioTime }
+  | CurveToValue { paramRef :: NodeRef, values :: [Double], startTime :: AudioTime, duration :: AudioTime }
   deriving (Show)
 
 data SynthSpec m = SynthSpec {
   nodeBuilders :: [m Node],
   connections :: [(NodeRef,NodeRef)],
   changes :: [Change],
-  deletionTime :: Maybe Double
+  deletionTime :: Maybe AudioTime
   }
 
 instance Show (SynthSpec m) where
@@ -66,10 +66,10 @@ connect' _ _ _ _ = error "unsupported connection type in connect'"
 addChange :: Monad m => Change -> SynthDef m ()
 addChange x = modify $ \s -> s { changes = changes s ++ [x] }
 
-setDeletionTime :: Monad m => Maybe Double -> SynthDef m ()
+setDeletionTime :: Monad m => Maybe AudioTime -> SynthDef m ()
 setDeletionTime t = modify $ \s -> s { deletionTime = combineDeletionTimes (deletionTime s) t }
 
-combineDeletionTimes :: Maybe Double -> Maybe Double -> Maybe Double
+combineDeletionTimes :: Maybe AudioTime -> Maybe AudioTime -> Maybe AudioTime
 combineDeletionTimes Nothing Nothing = Nothing
 combineDeletionTimes (Just t) Nothing = Just t
 combineDeletionTimes Nothing (Just t) = Just t
@@ -116,13 +116,13 @@ convolver spec normalize input = do
   connect input y
   return y
 
-delay :: AudioIO m => Double -> NodeRef -> SynthDef m NodeRef
+delay :: AudioIO m => AudioTime -> NodeRef -> SynthDef m NodeRef
 delay maxT input = do
   y <- addNodeBuilder $ createDelay maxT
   connect input y
   return y
 
-compressor :: AudioIO m => Double -> Double -> Double -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+compressor :: AudioIO m => Double -> Double -> Double -> AudioTime -> AudioTime -> NodeRef -> SynthDef m NodeRef
 compressor thr kne rat att rel input = do
   y <- addNodeBuilder $ createCompressor thr kne rat att rel
   connect input y
@@ -169,18 +169,18 @@ param :: AudioIO m => ParamType -> NodeRef -> NodeRef -> SynthDef m ()
 param pType (NodeRef i) input = connect input $ ParamRef i pType
 param _ _ _ = error "connectParam used with not actual node"
 
-setParam :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+setParam :: AudioIO m => ParamType -> Double -> AudioTime -> NodeRef -> SynthDef m NodeRef
 setParam pType v t (NodeRef i) = addChange (SetValue (ParamRef i pType) v t) >> return (NodeRef i)
 setParam _ _ _ _ = error "setParam used with not actual node"
 
-linearRampOnParam :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+linearRampOnParam :: AudioIO m => ParamType -> Double -> AudioTime -> NodeRef -> SynthDef m NodeRef
 linearRampOnParam pType v t (NodeRef i) = addChange (LinearRampToValue (ParamRef i pType) v t) >> return (NodeRef i)
 linearRampOnParam _ _ _ _ = error "linearRampOnParam used with not actual node"
 
-exponentialRampOnParam :: AudioIO m => ParamType -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+exponentialRampOnParam :: AudioIO m => ParamType -> Double -> AudioTime -> NodeRef -> SynthDef m NodeRef
 exponentialRampOnParam pType v t (NodeRef i) = addChange (ExponentialRampToValue (ParamRef i pType) v t) >> return (NodeRef i)
 exponentialRampOnParam _ _ _ _ = error "exponentialRampOnParam used with not actual node"
 
-curveOnParam :: AudioIO m => ParamType -> [Double] -> Double -> Double -> NodeRef -> SynthDef m NodeRef
+curveOnParam :: AudioIO m => ParamType -> [Double] -> AudioTime -> AudioTime -> NodeRef -> SynthDef m NodeRef
 curveOnParam pType vs t dur (NodeRef i) = addChange (CurveToValue (ParamRef i pType) vs t dur) >> return (NodeRef i)
 curveOnParam _ _ _ _ _ = error "curveOnParam used with not actual node"

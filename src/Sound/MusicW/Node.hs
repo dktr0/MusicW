@@ -140,7 +140,7 @@ createConvolver bufferSpec normalize = do
   setNodeField node "isSink" True
   setNodeField node "startable" False
 
-createDelay :: AudioIO m => Double -> m Node
+createDelay :: AudioIO m => AudioTime -> m Node
 createDelay maxT = do
   ctx <- audioContext
   node <- liftIO $ js_createDelay ctx maxT
@@ -149,7 +149,7 @@ createDelay maxT = do
   setNodeField node "isSink" True
   setNodeField node "startable" False
 
-createCompressor :: AudioIO m => Double -> Double -> Double -> Double -> Double -> m Node
+createCompressor :: AudioIO m => Double -> Double -> Double -> AudioTime -> AudioTime -> m Node
 createCompressor thr kne rat att rel = do
   ctx <- audioContext
   node <- liftIO $ js_createDynamicsCompressor ctx
@@ -274,12 +274,12 @@ disconnectAll x
   | not (js_isSource x) = return ()
   | otherwise  = liftIO $ js_disconnectAll x
 
-startNode :: MonadIO m => Double -> Node -> m ()
+startNode :: MonadIO m => AudioTime -> Node -> m ()
 startNode t x
   | js_startable x = liftIO $ js_start x t
   | otherwise  = return ()
 
-stopNode :: MonadIO m => Double -> Node -> m ()
+stopNode :: MonadIO m => AudioTime -> Node -> m ()
 stopNode t x
   | js_startable x = liftIO $ js_stop x t
   | otherwise  = return ()
@@ -315,22 +315,22 @@ setQ node = setValue node Q
 setValue :: AudioIO m => Node -> ParamType -> Double -> m Node
 setValue node pType value = audioTime >>= setValueAtTime node pType value
 
-setValueAtTime :: MonadIO m => Node -> ParamType -> Double -> Double -> m Node
+setValueAtTime :: MonadIO m => Node -> ParamType -> Double -> AudioTime -> m Node
 setValueAtTime node pType value time = do
   liftIO $ js_setValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-linearRampToValueAtTime :: MonadIO m => Node -> ParamType -> Double -> Double -> m Node
+linearRampToValueAtTime :: MonadIO m => Node -> ParamType -> Double -> AudioTime -> m Node
 linearRampToValueAtTime node pType value time = do
   liftIO $ js_linearRampToValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-exponentialRampToValueAtTime :: MonadIO m => Node -> ParamType -> Double -> Double -> m Node
+exponentialRampToValueAtTime :: MonadIO m => Node -> ParamType -> Double -> AudioTime -> m Node
 exponentialRampToValueAtTime node pType value time = do
   liftIO $ js_exponentialRampToValueAtTime node (pToJSVal $ show pType) value time
   return node
 
-setValueCurveAtTime :: MonadIO m => Node -> ParamType -> [Double] -> Double -> Double -> m Node
+setValueCurveAtTime :: MonadIO m => Node -> ParamType -> [Double] -> AudioTime -> AudioTime -> m Node
 setValueCurveAtTime node pType curve startTime duration = do
   curveArray <- liftIO $ toJSArray $ fmap pToJSVal curve
   typedCurveArray <- liftIO $ js_typedArrayFromArray curveArray
@@ -369,7 +369,7 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
   "$1.createDelay($2)"
-  js_createDelay :: AudioContext -> Double -> IO Node
+  js_createDelay :: AudioContext -> AudioTime -> IO Node
 
 foreign import javascript unsafe
   "$1.createDynamicsCompressor()"
@@ -419,11 +419,11 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
   "$1.start($2);"
-  js_start :: Node -> Double -> IO ()
+  js_start :: Node -> AudioTime -> IO ()
 
 foreign import javascript unsafe
   "$1.stop($2);"
-  js_stop :: Node -> Double -> IO ()
+  js_stop :: Node -> AudioTime -> IO ()
 
 foreign import javascript unsafe
   "$1.stop();"
@@ -439,15 +439,15 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
   "$1[$2].linearRampToValueAtTime($3, $4);"
-  js_linearRampToValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
+  js_linearRampToValueAtTime :: Node -> JSVal -> Double -> AudioTime -> IO ()
 
 foreign import javascript unsafe
   "$1[$2].exponentialRampToValueAtTime($3, $4);"
-  js_exponentialRampToValueAtTime :: Node -> JSVal -> Double -> Double -> IO ()
+  js_exponentialRampToValueAtTime :: Node -> JSVal -> Double -> AudioTime -> IO ()
 
 foreign import javascript unsafe
   "$1[$2].setValueCurveAtTime($3, $4, $5);"
-  js_setValueCurveAtTime :: Node -> JSVal -> Float32Array -> Double -> Double -> IO ()
+  js_setValueCurveAtTime :: Node -> JSVal -> Float32Array -> Double -> AudioTime -> IO ()
 
 foreign import javascript unsafe
   "$1[$2] = $3;"

@@ -28,7 +28,7 @@ data Synth m = Synth {
   --audioBuffers :: Map Int AudioBuffer, -- TODO restarting a AudioBufferSourceNode needs to replace the buffers
   } deriving (Show)
 
-playSynth :: AudioIO m => Node -> Double -> SynthDef m a -> m (a, Synth m)
+playSynth :: AudioIO m => Node -> AudioTime -> SynthDef m a -> m (a, Synth m)
 playSynth dest t x = do
   (a,spec) <- runSynthDef x
   s <- synthSpecToSynth dest spec
@@ -75,13 +75,13 @@ disconnectOnStop :: (Foldable t, AudioIO m) => t Node -> m ()
 disconnectOnStop ns = maybe (return ()) f $ find isSourceNode ns
   where f x = liftIO $ onended x $ \_ -> mapM_ disconnectAll ns
 
-startSynth :: AudioIO m => Double -> Synth m -> m ()
+startSynth :: AudioIO m => AudioTime -> Synth m -> m ()
 startSynth t0 s = do
   mapM_ (startNode t0) $ nodes s
   maybe (return ()) (\t -> stopSynth (t0+t) s) $ deletionTime (spec s)
   mapM_ (scheduleChange (nodes s) t0) $ changes (spec s)
 
-scheduleChange :: AudioIO m => [Node] -> Double -> Change -> m ()
+scheduleChange :: AudioIO m => [Node] -> AudioTime -> Change -> m ()
 scheduleChange ns t0 (SetValue (ParamRef i pType) v t) = void $ setValueAtTime (ns!!i) pType v (t0+t)
 scheduleChange ns t0 (LinearRampToValue (ParamRef i pType) v t) = void $ linearRampToValueAtTime (ns!!i) pType v (t0+t)
 scheduleChange ns t0 (ExponentialRampToValue (ParamRef i pType) v t) = void $ exponentialRampToValueAtTime (ns!!i) pType v (t0+t)
@@ -93,7 +93,7 @@ startSynthNow s = do
   t <- audioTime
   startSynth (t + 0.050) s
 
-stopSynth :: MonadIO m => Double -> Synth m -> m ()
+stopSynth :: MonadIO m => AudioTime -> Synth m -> m ()
 stopSynth t s = mapM_ (stopNode t) $ nodes s
 
 stopSynthNow :: MonadIO m => Synth m -> IO ()
@@ -102,7 +102,7 @@ stopSynthNow s = mapM_ stopNodeNow $ nodes s
 disconnectSynth :: MonadIO m => Synth m -> IO ()
 disconnectSynth s = mapM_ disconnectAll $ nodes s
 
-restartSynth :: AudioIO m => Double -> Synth m -> m ()
+restartSynth :: AudioIO m => AudioTime -> Synth m -> m ()
 restartSynth t s = do
   stopSynth t s
   s' <- synthSpecToSynth (cachedDestination s) (spec s)

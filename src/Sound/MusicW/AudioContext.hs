@@ -10,6 +10,8 @@ import Data.Time
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 
+type AudioTime = Double
+
 newtype AudioContext = AudioContext JSVal
 
 instance PToJSVal AudioContext where pToJSVal (AudioContext val) = val
@@ -48,7 +50,7 @@ foreign import javascript safe
 
 foreign import javascript unsafe
   "$1.currentTime"
-  getAudioTime :: AudioContext -> IO Double
+  getAudioTime :: AudioContext -> IO AudioTime
 
 -- State management functions, both a sync and async version
 
@@ -71,7 +73,7 @@ resumeSync :: AudioContext -> IO (Maybe Text)
 resumeSync ac = pFromJSVal <$> js_resumeSync ac
 
 foreign import javascript interruptible
-  "$1.suspend().then($c)['catch'](function(e){$c(''+e);});" 
+  "$1.suspend().then($c)['catch'](function(e){$c(''+e);});"
   js_suspendSync :: AudioContext -> IO JSVal
 
 foreign import javascript unsafe
@@ -92,22 +94,6 @@ foreign import javascript unsafe
 closeSync :: AudioContext -> IO (Maybe Text)
 closeSync ac = pFromJSVal <$> js_closeSync ac
 
--- | Get the current audio time but cast it to a UTCTime for easier interoperation
--- with the standard Haskell time module. Note that the approach here might not work
--- if the audio context runs for more than one day.
-
-getAudioUTCTime :: AudioContext -> IO UTCTime
-getAudioUTCTime ctx = doubleToUTCTime <$> getAudioTime ctx
-
-doubleToUTCTime :: Double -> UTCTime
-doubleToUTCTime x = UTCTime {
-  utctDay = toEnum 0,
-  utctDayTime = realToFrac x -- *** this might not work if audio context runs for more than one day...
-  }
-
-utcTimeToDouble :: UTCTime -> Double
-utcTimeToDouble x = max (realToFrac $ utctDayTime x) 0.0
-
 foreign import javascript unsafe
   "$1.sampleRate"
   getSampleRate :: AudioContext -> IO Double
@@ -119,11 +105,8 @@ foreign import javascript unsafe
 class (MonadIO m) => AudioIO m where
   audioContext :: m AudioContext
 
-audioTime :: AudioIO m => m Double
+audioTime :: AudioIO m => m AudioTime
 audioTime = audioContext >>= liftIO . getAudioTime
-
-audioUTCTime :: AudioIO m => m UTCTime
-audioUTCTime = audioContext >>= liftIO . getAudioUTCTime
 
 sampleRate :: AudioIO m => m Double
 sampleRate = audioContext >>= liftIO . getSampleRate

@@ -109,7 +109,7 @@ foreign import javascript safe
 
 foreign import javascript safe
   "$1.duration"
-  js_bufferDuration :: AudioBuffer -> IO Double
+  js_bufferDuration :: AudioBuffer -> IO AudioTime
 
 foreign import javascript safe
   "$1.numberOfChannels"
