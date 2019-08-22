@@ -47,6 +47,9 @@ dbAmpWorklet x = audioWorklet "dbAmp-processor" [x]
 absWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
 absWorklet x = audioWorklet "abs-processor" [x]
 
+sqrtWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+sqrtWorklet x = audioWorklet "sqrt-processor" [x]
+
 safeDivideWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 safeDivideWorklet in1 in2 = audioWorklet "safeDivide-processor" [in1,in2]
 
@@ -272,6 +275,20 @@ workletsJS = "\
 \  }\
 \ }\
 \ registerProcessor('abs-processor',AbsProcessor);\
+\ \
+\ class SqrtProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input[0].length; i++) {\
+\      output[0][i] = Math.sqrt(input[0][i]);\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('sqrt-processor',SqrtProcessor);\
 \ \
 \ class SafeDivideProcessor extends AudioWorkletProcessor {\
 \  static get parameterDescriptors() { return []; }\
