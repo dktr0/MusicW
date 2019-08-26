@@ -43,7 +43,7 @@ playSynthNow dest x = do
   return (a,s)
 
 nodeRefToNode :: AudioIO m => NodeRef -> Synth m -> m Node
-nodeRefToNode (NodeRef i) s = return $ (nodes s)!!i
+nodeRefToNode (NodeRef i (_,_)) s = return $ (nodes s)!!i
 nodeRefToNode (ParamRef i pType) s = createParameter ((nodes s)!!i) pType
 nodeRefToNode DestinationRef s = return $ cachedDestination s
 
@@ -61,9 +61,9 @@ synthSpecToSynth dest x = do
   return $ Synth { cachedDestination = dest, spec = x, nodes = ns }
 
 makeConnections :: AudioIO m => Node -> [Node] -> NodeRef -> NodeRef -> m ()
-makeConnections dest ns (NodeRef from) DestinationRef = connectNodes (ns!!from) dest
-makeConnections _ ns (NodeRef from) (NodeRef to) = connectNodes (ns!!from) (ns!!to)
-makeConnections _ ns (NodeRef from) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes (ns!!from)
+makeConnections dest ns (NodeRef from (_,_)) DestinationRef = connectNodes (ns!!from) dest
+makeConnections _ ns (NodeRef from (_,_)) (NodeRef to (_,_)) = connectNodes (ns!!from) (ns!!to)
+makeConnections _ ns (NodeRef from (_,_)) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes (ns!!from)
 makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeInputRef toNode toChannel) = connectNodes' (ns!!fromNode) fromChannel (ns!!toNode) toChannel
 makeConnections _ _ _ _ = error "Malformed graph structure."
 

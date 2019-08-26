@@ -56,7 +56,9 @@ safeDivideWorklet in1 in2 = audioWorklet "safeDivide-processor" [in1,in2]
 
 audioWorklet :: AudioIO m => String -> [NodeRef] -> SynthDef m NodeRef
 audioWorklet workletName inputs = do
-  y <- addNodeBuilder $ createAudioWorkletNode (length inputs) 1 workletName
+  let iChnls = length inputs -- NOTE limiting assumption that each input NodeRef provides only one channel of input
+  let oChnls = 1 -- NOTE limiting assumption that each audio worklet provides only one channel of output
+  y <- addNodeBuilder (iChnls,oChnls) $ createAudioWorkletNode iChnls oChnls workletName
   zipWithM (\x n -> connect' x 0 y n) inputs [0..]
   return y
 
