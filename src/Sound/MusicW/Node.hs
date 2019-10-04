@@ -212,9 +212,21 @@ createScriptProcessor inChnls outChnls cb = do
   setNodeField node "isSink" True
   setNodeField node "startable" True
 
+createAnalyser :: AudioIO m => Int -> Double -> m Node
+createAnalyser fftSize smoothingTimeConstant = do
+  ctx <- audioContext
+  node <- liftIO $ js_createAnalyser ctx
+  setNodeField node "fftSize" fftSize
+  setNodeField node "smoothingTimeConstant" smoothingTimeConstant
+  setNodeField node "isSource" False -- technically, not true, but...
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
+
 -- | There is no function in the Web Audio API to "create" the context's
 -- destination but we provide one anyway, as a convenient way to get a node
 -- that, like all the other nodes, can be used in connections.
+
 
 createDestination :: AudioIO m => m Node
 createDestination = do
@@ -400,6 +412,10 @@ foreign import javascript unsafe
   \  $1.___stream = $1.createMediaStreamDestination(); \
   \} $r = $1.___stream;"
   js_getContextSharedMediaStreamDestination :: AudioContext -> IO Node
+
+foreign import javascript unsafe
+  "$1.createAnalyser()"
+  js_createAnalyser :: AudioContext -> IO Node
 
 foreign import javascript unsafe
   "$1.connect($2);"
