@@ -168,6 +168,12 @@ scriptProcessor inChnls outChnls cb input = do
   connect input y
   return y
 
+analyser :: AudioIO m => Int -> Double -> NodeRef -> SynthDef m NodeRef
+analyser fftSize smoothingTimeConstant input = do
+  y <- addNodeBuilder (1,0) $ createAnalyser fftSize smoothingTimeConstant
+  connect input y
+  return y
+
 audioOut :: AudioIO m => NodeRef -> SynthDef m ()
 audioOut input = connect input DestinationRef
 
