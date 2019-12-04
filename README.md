@@ -1,3 +1,2 @@
-# reflex-synth
-Library for describing Web Audio sound synthesis events, to be used with Reflex-DOM
-  
+# MusicW
+Sound synthesis library, to be used with GHCJS and Web Audio API  

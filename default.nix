@@ -8,7 +8,7 @@ with pkgs.haskell.lib;
 
 {
 
-  name = "MusicW";
+  name = "musicw";
 
   packages = {
     musicw = ./.;
