@@ -1,5 +1,5 @@
 name:                musicw
-version:             0.2.0
+version:             0.3.0
 synopsis:            Sound synthesis library, to be used with GHCJS and Web Audio API
 description:         A library for sound synthesis, currently targeting GHCJS and the Web Audio API. Used in the Inner Ear and Estuary projects.
 homepage:            http://github.com/d0kt0r0/reflex-synth/blob/master/README.md
