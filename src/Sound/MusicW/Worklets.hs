@@ -56,6 +56,14 @@ safeDivideWorklet in1 in2 = audioWorklet "safeDivide-processor" [in1,in2]
 powWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 powWorklet in1 in2 = audioWorklet "pow-processor" [in1,in2]
 
+floorWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+floorWorklet x = audioWorklet "floor-processor" [x]
+
+fractWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+fractWorklet x = audioWorklet "fract-processor" [x]
+
+clipWorklet :: AudioIO m => NodeRef -> NodeRef -> NodeRef -> SynthDef m NodeRef
+clipWorklet lo hi input = audioWorklet "clip-processor" [lo,hi,input]
 
 audioWorklet :: AudioIO m => String -> [NodeRef] -> SynthDef m NodeRef
 audioWorklet workletName inputs = do
@@ -324,4 +332,48 @@ workletsJS = "\
 \    return true;\
 \  }\
 \ }\
-\ registerProcessor('pow-processor',PowProcessor);"
+\ registerProcessor('pow-processor',PowProcessor);\
+\ \
+\ class FloorProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input1 = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input1[0].length; i++) {\
+\      output[0][i] = Math.floor(input1[0][i]);\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('floor-processor',FloorProcessor);\
+\ \
+\ class FractProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input1 = inputs[0];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input1[0].length; i++) {\
+\      output[0][i] = input1[0][i] % 1;\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('fract-processor',FractProcessor);\
+\ \
+\ class ClipProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const min = inputs[0];\
+\    const max = inputs[1];\
+\    const input = inputs[2];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input[0].length; i++) {\
+\      output[0][i] = Math.min(Math.max(input[0][i], min[0][i]), max[0][i]);\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('clip-processor',ClipProcessor);"
