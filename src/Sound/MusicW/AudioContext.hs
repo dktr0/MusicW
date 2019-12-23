@@ -35,7 +35,7 @@ foreign import javascript unsafe "\"suspended\"" js_acSuspended :: JSVal
 foreign import javascript unsafe "\"closed\"" js_acClosed :: JSVal
 
 foreign import javascript safe
-  "new (window.AudioContext || window.webkitAudioContext)()"
+  "new (window.AudioContext || window.webkitAudioContext)({ latencyHint: \"playback\", sampleRate: 48000 })"
   newAudioContext :: IO AudioContext
 
 foreign import javascript unsafe
@@ -44,7 +44,9 @@ foreign import javascript unsafe
 
 foreign import javascript safe
   "if (window.___ac == null) { \
-  \    window.___ac = new (window.AudioContext || window.webkitAudioContext)();\
+  \    window.___ac = new (window.AudioContext || window.webkitAudioContext)(\
+  \      { latencyHint: \"playback\", sampleRate: 48000 } \
+  \      );\
   \} $r = window.___ac;"
   getGlobalAudioContext :: IO AudioContext
 
