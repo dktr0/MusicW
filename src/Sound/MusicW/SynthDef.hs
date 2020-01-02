@@ -126,13 +126,13 @@ channelMerger xs = do
   zipWithM_ (\x i -> connect' x 0 y i) xs [0..]
   return y
 
--- note: channelSplitter does not actually create any new synthesis nodes
--- it just turns all of the output channels of a node with outputs into
--- individual node references.
 channelSplitter :: AudioIO m => NodeRef -> SynthDef m [NodeRef]
-channelSplitter (NodeOutputRef n o) = return [NodeOutputRef n o]
-channelSplitter (NodeRef n (_,oChnls)) = return $ fmap (NodeOutputRef n) [0 .. (oChnls-1)]
-channelSplitter _ = error "MusicW: channelSplitter called on NodeInputRef ParamRef or DestinationRef"
+channelSplitter input | nodeRefOutputCount input < 1 = error "MusicW: channelSplitter called on NodeRef not representing a node output"
+                      | otherwise = do
+  let nchnls = nodeRefOutputCount input
+  y@(NodeRef n _) <- addNodeBuilder (1,nchnls) $ createChannelSplitter nchnls
+  connect input y
+  return $ fmap (NodeOutputRef n) [0 .. (nchnls-1)]
 
 convolver :: AudioIO m => Either Float32Array FloatArraySpec -> Bool -> NodeRef -> SynthDef m NodeRef
 convolver spec normalize input = do

@@ -179,6 +179,14 @@ createChannelMerger nChnls = do
   setNodeField node "isSink" True
   setNodeField node "startable" False
 
+createChannelSplitter :: AudioIO m => Int -> m Node
+createChannelSplitter nChnls = do
+  ctx <- audioContext
+  node <- liftIO $ js_createChannelSplitter ctx nChnls
+  setNodeField node "isSource" True
+  setNodeField node "isSink" True
+  setNodeField node "startable" False
+
 data OversampleAmount
   = NoOversampling
   | X2Oversampling
@@ -400,6 +408,10 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.createChannelMerger($2)"
   js_createChannelMerger :: AudioContext -> Int -> IO Node
+
+foreign import javascript unsafe
+  "$1.createChannelSplitter($2)"
+  js_createChannelSplitter :: AudioContext -> Int -> IO Node
 
 foreign import javascript unsafe
   "$1.createWaveShaper()"
