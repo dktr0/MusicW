@@ -130,7 +130,8 @@ channelSplitter :: AudioIO m => NodeRef -> SynthDef m [NodeRef]
 channelSplitter input | nodeRefOutputCount input < 1 = error "MusicW: channelSplitter called on NodeRef not representing a node output"
                       | otherwise = do
   let nchnls = nodeRefOutputCount input
-  y@(NodeRef n _) <- addNodeBuilder (1,nchnls) $ createChannelSplitter nchnls
+  y <- addNodeBuilder (1,nchnls) $ createChannelSplitter nchnls
+  let (NodeRef n _) = y
   connect input y
   return $ fmap (NodeOutputRef n) [0 .. (nchnls-1)]
 

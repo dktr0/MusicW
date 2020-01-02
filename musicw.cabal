@@ -11,6 +11,7 @@ copyright:           2017- David Ogborn, Jamie Beverley, Luis Navarro del Angel,
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
+tested-with:         GHCJS == 8.6.0.1
 extra-source-files:
 
 Library
