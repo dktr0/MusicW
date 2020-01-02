@@ -64,6 +64,8 @@ makeConnections :: AudioIO m => Node -> [Node] -> NodeRef -> NodeRef -> m ()
 makeConnections dest ns (NodeRef from (_,_)) DestinationRef = connectNodes (ns!!from) dest
 makeConnections _ ns (NodeRef from (_,_)) (NodeRef to (_,_)) = connectNodes (ns!!from) (ns!!to)
 makeConnections _ ns (NodeRef from (_,_)) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes (ns!!from)
+makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeRef to (_,_)) = connectNodes'' (ns!!fromNode) fromChannel (ns!!to)
+makeConnections _ ns (NodeOutputRef fromNode fromChannel) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes'' (ns!!fromNode) fromChannel
 makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeInputRef toNode toChannel) = connectNodes' (ns!!fromNode) fromChannel (ns!!toNode) toChannel
 makeConnections _ _ _ _ = error "Malformed graph structure."
 

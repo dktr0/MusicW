@@ -1,5 +1,5 @@
 name:                musicw
-version:             0.3.1
+version:             0.3.2
 synopsis:            Sound synthesis library, to be used with GHCJS and Web Audio API
 description:         A library for sound synthesis, currently targeting GHCJS and the Web Audio API. Used in the Inner Ear and Estuary projects.
 homepage:            https://github.com/dktr0/musicw/blob/master/README.md

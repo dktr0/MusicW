@@ -275,6 +275,12 @@ connectNodes' fromNode fromChannel toNode toChannel
   | not (js_isSink toNode) = error $ (show toNode) ++ " can't be connect target."
   | otherwise   = liftIO $ js_connect' fromNode toNode fromChannel toChannel
 
+connectNodes'' :: MonadIO m => Node -> Int -> Node -> m ()
+connectNodes'' fromNode fromChannel toNode
+  | not (js_isSource fromNode) = error $ (show fromNode) ++ " can't be connect source."
+  | not (js_isSink toNode) = error $ (show toNode) ++ " can't be connect target."
+  | otherwise   = liftIO $ js_connect'' fromNode toNode fromChannel
+
 disconnectNodes :: MonadIO m => Node -> Node -> m ()
 disconnectNodes from to
   | not (js_isSource from) = error $ (show from) ++ " can't be disconnect source."
@@ -424,6 +430,10 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.connect($2,$3,$4);"
   js_connect' :: Node -> Node -> Int -> Int -> IO ()
+
+foreign import javascript unsafe
+  "$1.connect($2,$3);"
+  js_connect'' :: Node -> Node -> Int -> IO ()
 
 foreign import javascript unsafe
   "$1.disconnect($2);"
