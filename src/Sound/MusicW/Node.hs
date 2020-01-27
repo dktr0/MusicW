@@ -243,6 +243,14 @@ createDestination = do
   setNodeField node "isSink" True
   setNodeField node "startable" False
 
+createMicrophone :: AudioIO m => m Node
+createMicrophone = do
+  ctx <- audioContext
+  node <- liftIO $ js_createMicrophone ctx
+  setNodeField node "isSource" True
+  setNodeField node "isSink" False
+  setNodeField node "startable" False
+
 createMediaStreamDestination :: AudioIO m => m Node
 createMediaStreamDestination = do
   ctx <- audioContext
@@ -420,6 +428,14 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.createScriptProcessor(void 0, $2, $3)"
   js_createScriptProcessor :: AudioContext -> Int -> Int -> IO Node
+
+foreign import javascript safe
+  "$r = $1.createGain();\
+  \navigator.mediaDevices.getUserMedia({ audio: true, video: false}).then(function(stream) {\
+  \  var x = new MediaStreamAudioSourceNode($1,{mediaStream: stream});\
+  \  x.connect($r);\
+  \});"
+  js_createMicrophone :: AudioContext -> IO Node
 
 foreign import javascript unsafe
   "$1.createMediaStreamDestination()"

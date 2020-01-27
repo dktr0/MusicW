@@ -181,6 +181,9 @@ audioOut input = connect input DestinationRef
 audioIn :: AudioIO m => SynthDef m NodeRef
 audioIn = addNodeBuilder (0,1) $ createGain 1.0 -- TODO: hard-coded single input channel will be problematic later
 
+microphone :: AudioIO m => SynthDef m NodeRef
+microphone = addNodeBuilder (0,1) createMicrophone 
+
 resink :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 resink target input = connect input target >> return target
 
