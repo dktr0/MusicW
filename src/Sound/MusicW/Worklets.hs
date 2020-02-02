@@ -53,6 +53,9 @@ sqrtWorklet x = audioWorklet "sqrt-processor" [x]
 safeDivideWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 safeDivideWorklet in1 in2 = audioWorklet "safeDivide-processor" [in1,in2]
 
+unsafeDivideWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
+unsafeDivideWorklet in1 in2 = audioWorklet "unsafeDivide-processor" [in1,in2]
+
 powWorklet :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 powWorklet in1 in2 = audioWorklet "pow-processor" [in1,in2]
 
@@ -317,7 +320,20 @@ workletsJS = "\
 \    return true;\
 \  }\
 \ }\
-\ registerProcessor('safeDivide-processor',SafeDivideProcessor);\
+\ class UnsafeDivideProcessor extends AudioWorkletProcessor {\
+\  static get parameterDescriptors() { return []; }\
+\  constructor() { super(); }\
+\  process(inputs,outputs,parameters) {\
+\    const input1 = inputs[0];\
+\    const input2 = inputs[1];\
+\    const output = outputs[0];\
+\    for(let i = 0; i < input1[0].length; i++) {\
+\      output[0][i] = input1[0][i] / input2[0][i];\
+\    }\
+\    return true;\
+\  }\
+\ }\
+\ registerProcessor('unsafeDivide-processor',UnsafeDivideProcessor);\
 \ \
 \ class PowProcessor extends AudioWorkletProcessor {\
 \  static get parameterDescriptors() { return []; }\
