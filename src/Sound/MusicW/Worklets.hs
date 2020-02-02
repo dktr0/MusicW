@@ -320,6 +320,8 @@ workletsJS = "\
 \    return true;\
 \  }\
 \ }\
+\ registerProcessor('safeDivide-processor',SafeDivideProcessor);\
+\ \
 \ class UnsafeDivideProcessor extends AudioWorkletProcessor {\
 \  static get parameterDescriptors() { return []; }\
 \  constructor() { super(); }\
