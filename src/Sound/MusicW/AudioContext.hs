@@ -45,10 +45,26 @@ foreign import javascript unsafe
 foreign import javascript safe
   "if (window.___ac == null) { \
   \    window.___ac = new (window.AudioContext || window.webkitAudioContext)(\
-  \      { latencyHint: \"playback\", sampleRate: 48000 } \
+  \      { sampleRate: 48000 } \
   \      );\
   \} $r = window.___ac;"
   getGlobalAudioContext :: IO AudioContext
+
+foreign import javascript safe
+  "if (window.___ac == null) { \
+  \    window.___ac = new (window.AudioContext || window.webkitAudioContext)(\
+  \      { latencyHint: \"playback\", sampleRate: 48000 } \
+  \      );\
+  \} $r = window.___ac;"
+  getGlobalAudioContextPlayback :: IO AudioContext
+
+foreign import javascript safe
+  "if (window.___ac == null) { \
+  \    window.___ac = new (window.AudioContext || window.webkitAudioContext)(\
+  \      { latencyHint: \"interactive\", sampleRate: 48000 } \
+  \      );\
+  \} $r = window.___ac;"
+  getGlobalAudioContextInteractive :: IO AudioContext
 
 foreign import javascript unsafe
   "$1.currentTime"
