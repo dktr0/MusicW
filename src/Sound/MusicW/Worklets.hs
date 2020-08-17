@@ -151,8 +151,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      if(input1[0][i] == input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        if(input1[0][i] == input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -170,8 +172,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      if(input1[0][i] != input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        if(input1[0][i] != input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -189,8 +193,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      if(input1[0][i] > input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        if(input1[0][i] > input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -208,8 +214,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      if(input1[0][i] >= input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        if(input1[0][i] >= input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -227,8 +235,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      if(input1[0][i] < input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        if(input1[0][i] < input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -246,8 +256,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      if(input1[0][i] <= input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        if(input1[0][i] <= input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -260,8 +272,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input[0].length; i++) {\
-\      output[0][i] = 440 * (2 ** ((input[0][i]-69)/12));\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input[0].length; i++) {\
+\        output[0][i] = 440 * (2 ** ((input[0][i]-69)/12));\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -274,8 +288,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input[0].length; i++) {\
-\      output[0][i] = 69 + (12 * (Math.log2(input[0][i]/440)));\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input[0].length; i++) {\
+\        output[0][i] = 69 + (12 * (Math.log2(input[0][i]/440)));\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -288,8 +304,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input[0].length; i++) {\
-\      output[0][i] = 10 ** (input[0][i]/20);\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input[0].length; i++) {\
+\        output[0][i] = 10 ** (input[0][i]/20);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -302,8 +320,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input[0].length; i++) {\
-\      output[0][i] = 20 * Math.log10(input[0][i]);\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input[0].length; i++) {\
+\        output[0][i] = 20 * Math.log10(input[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -316,8 +336,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input[0].length; i++) {\
-\      output[0][i] = Math.abs(input[0][i]);\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input[0].length; i++) {\
+\        output[0][i] = Math.abs(input[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -330,8 +352,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input[0].length; i++) {\
-\      output[0][i] = Math.sqrt(input[0][i]);\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input[0].length; i++) {\
+\        output[0][i] = Math.sqrt(input[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -345,9 +369,11 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      if(input2[0][i] == 0) output[0][i] = 0;\
-\      else output[0][i] = input1[0][i] / input2[0][i];\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        if(input2[0][i] == 0) output[0][i] = 0;\
+\        else output[0][i] = input1[0][i] / input2[0][i];\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -361,8 +387,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      output[0][i] = input1[0][i] / input2[0][i];\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        output[0][i] = input1[0][i] / input2[0][i];\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -376,8 +404,10 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      output[0][i] = Math.pow(input1[0][i],input2[0][i]);\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        output[0][i] = Math.pow(input1[0][i],input2[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -390,8 +420,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      output[0][i] = Math.floor(input1[0][i]);\
+\    if(input1[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        output[0][i] = Math.floor(input1[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -404,8 +436,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input1[0].length; i++) {\
-\      output[0][i] = input1[0][i] % 1;\
+\    if(input1[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input1[0].length; i++) {\
+\        output[0][i] = input1[0][i] % 1;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -420,8 +454,10 @@ workletsJS = "\
 \    const max = inputs[1];\
 \    const input = inputs[2];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < input[0].length; i++) {\
-\      output[0][i] = Math.min(Math.max(input[0][i], min[0][i]), max[0][i]);\
+\    if(min[0] === undefined || max[0] === undefined || input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < input[0].length; i++) {\
+\        output[0][i] = Math.min(Math.max(input[0][i], min[0][i]), max[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -435,8 +471,10 @@ workletsJS = "\
 \    const in1 = inputs[0];\
 \    const in2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < in1[0].length; i++) {\
-\      output[0][i] = Math.max(in1[0][i],in2[0][i]);\
+\    if(in1[0] === undefined || in2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < in1[0].length; i++) {\
+\        output[0][i] = Math.max(in1[0][i],in2[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -450,8 +488,10 @@ workletsJS = "\
 \    const in1 = inputs[0];\
 \    const in2 = inputs[1];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < in1[0].length; i++) {\
-\      output[0][i] = Math.min(in1[0][i],in2[0][i]);\
+\    if(in1[0] === undefined || in2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < in1[0].length; i++) {\
+\        output[0][i] = Math.min(in1[0][i],in2[0][i]);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -479,8 +519,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < output[0].length; i++) {\
-\      output[0][i] = (input[0][i] >= 0) ? 1 : -1;\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < output[0].length; i++) {\
+\        output[0][i] = (input[0][i] >= 0) ? 1 : -1;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -494,8 +536,10 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    for(let i = 0; i < output[0].length; i++) {\
-\      output[0][i] = Math.abs(Math.asin(input[0][i]))*this.MULT-1;\
+\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      for(let i = 0; i < output[0].length; i++) {\
+\        output[0][i] = Math.abs(Math.asin(input[0][i]))*this.MULT-1;\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -509,10 +553,12 @@ workletsJS = "\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    var a;\
-\    for(let i = 0; i < output[0].length; i++) {\
-\      a = Math.abs(Math.asin(input1[0][i]))*this.MULT;\
-\      output[0][i] = (input2[0][i] >= 0) ? (a-1) : (1-a);\
+\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\      var a;\
+\      for(let i = 0; i < output[0].length; i++) {\
+\        a = Math.abs(Math.asin(input1[0][i]))*this.MULT;\
+\        output[0][i] = (input2[0][i] >= 0) ? (a-1) : (1-a);\
+\      }\
 \    }\
 \    return true;\
 \  }\
@@ -525,8 +571,15 @@ workletsJS = "\
 \  process(inputs,outputs,parameters) {\
 \    const output = outputs[0];\
 \    if(inputs.length < 2) { for(let i = 0; i < output[0].length; i++) output[0][i] = 0;}\
-\    else if(inputs.length == 2) { for(let i = 0; i < output[0].length; i++) output[0][i] = inputs[1][i];}\
+\    else if(inputs[0][0] === undefined || inputs[1][0] === undefined) { for(let i = 0; i < output[0].length; i++) output[0][i] = 0;}\
+\    else if(inputs.length == 2) { for(let i = 0; i < output[0].length; i++) output[0][i] = inputs[1][0][i];}\
 \    else {\
+\      for(let n = 2; n < inputs.length; n++){\
+\        if(inputs[n][0] === undefined){\
+\          for(let i = 0; i < output[0].length; i++) output[0][i] = 0;\
+\          return true;\
+\        }\
+\      }\
 \      var a,n = inputs.length - 1;\
 \      for(let i = 0; i < output[0].length; i++) {\
 \        a = inputs[0][0][i] * 0.5 + 0.5;\

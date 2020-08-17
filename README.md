@@ -4,6 +4,7 @@ Sound synthesis library, to be used with GHCJS and Web Audio API
 
 # History
 
+- 0.3.5.1: added input sanity checking to existing audio worklets (output 0 when inputs not connected yet)
 - 0.3.5: added maxWorklet, minWorklet, whiteNoiseWorklet, sinToSqrWorklet, sinToTriWorklet, sinToSawWorklet, stepWorklet
 - 0.3.4: added unsafeDivideWorklet, getGlobalAudioContextInteractive/Playback
 - 0.3.3: added microphone
