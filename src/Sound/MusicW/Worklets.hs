@@ -141,370 +141,398 @@ foreign import javascript safe
 workletsJS :: String
 workletsJS = "\
 \ class EqualProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() {\
-\    return [];\
-\  }\
-\  constructor() {\
-\    super();\
-\  }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        if(input1[0][i] == input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || ( hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('equal-processor',EqualProcessor);\
 \ \
 \ class NotEqualProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() {\
-\    return [];\
-\  }\
-\  constructor() {\
-\    super();\
-\  }\
-\  process(inputs,outputs,parameters) {\
+\  constructor() { super(); this.notStarted = true; }\
+\  process(inputs,outputs) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        if(input1[0][i] != input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || ( hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('notEqual-processor',NotEqualProcessor);\
 \ \
 \ class GreaterThanProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() {\
-\    return [];\
-\  }\
-\  constructor() {\
-\    super();\
-\  }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        if(input1[0][i] > input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || ( hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('greaterThan-processor',GreaterThanProcessor);\
 \ \
 \ class GreaterThanOrEqualProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() {\
-\    return [];\
-\  }\
-\  constructor() {\
-\    super();\
-\  }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        if(input1[0][i] >= input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || ( hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('greaterThanOrEqual-processor',GreaterThanOrEqualProcessor);\
 \ \
 \ class LessThanProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() {\
-\    return [];\
-\  }\
-\  constructor() {\
-\    super();\
-\  }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        if(input1[0][i] < input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || ( hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('lessThan-processor',LessThanProcessor);\
 \ \
 \ class LessThanOrEqualProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() {\
-\    return [];\
-\  }\
-\  constructor() {\
-\    super();\
-\  }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0;i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        if(input1[0][i] <= input2[0][i]) output[0][i] = 1; else output[0][i] = 0;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || ( hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('lessThanOrEqual-processor',LessThanOrEqualProcessor);\
 \ \
 \ class MidiCpsProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
-\  process(inputs,outputs,parameters) {\
+\  constructor() { super(); this.notStarted = true; }\
+\  process(inputs,outputs) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input[0].length; i++) {\
-\        output[0][i] = 440 * (2 ** ((input[0][i]-69)/12));\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = 440 * (2 ** ((input[0][n]-69)/12));\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('midiCps-processor',MidiCpsProcessor);\
 \ \
 \ class CpsMidiProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input[0].length; i++) {\
-\        output[0][i] = 69 + (12 * (Math.log2(input[0][i]/440)));\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = 69 + (12 * (Math.log2(input[0][n]/440)));\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('cpsMidi-processor',CpsMidiProcessor);\
 \ \
 \ class DbAmpProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input[0].length; i++) {\
-\        output[0][i] = 10 ** (input[0][i]/20);\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = 10 ** (input[0][n]/20);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('dbAmp-processor',DbAmpProcessor);\
 \ \
 \ class AmpDbProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input[0].length; i++) {\
-\        output[0][i] = 20 * Math.log10(input[0][i]);\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = 20 * Math.log10(input[0][n]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('ampDb-processor',AmpDbProcessor);\
 \ \
 \ class AbsProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input[0].length; i++) {\
-\        output[0][i] = Math.abs(input[0][i]);\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = Math.abs(input[0][n]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('abs-processor',AbsProcessor);\
 \ \
 \ class SqrtProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input[0].length; i++) {\
-\        output[0][i] = Math.sqrt(input[0][i]);\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = Math.sqrt(input[0][n]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('sqrt-processor',SqrtProcessor);\
 \ \
 \ class SafeDivideProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        if(input2[0][i] == 0) output[0][i] = 0;\
 \        else output[0][i] = input1[0][i] / input2[0][i];\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('safeDivide-processor',SafeDivideProcessor);\
 \ \
 \ class UnsafeDivideProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        output[0][i] = input1[0][i] / input2[0][i];\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('unsafeDivide-processor',UnsafeDivideProcessor);\
 \ \
 \ class PowProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        output[0][i] = Math.pow(input1[0][i],input2[0][i]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('pow-processor',PowProcessor);\
 \ \
 \ class FloorProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
-\    const input1 = inputs[0];\
+\    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
-\        output[0][i] = Math.floor(input1[0][i]);\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = Math.floor(input[0][n]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('floor-processor',FloorProcessor);\
 \ \
 \ class FractProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
-\    const input1 = inputs[0];\
+\    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input1[0].length; i++) {\
-\        output[0][i] = input1[0][i] % 1;\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = input[0][n] % 1;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('fract-processor',FractProcessor);\
 \ \
 \ class ClipProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const min = inputs[0];\
 \    const max = inputs[1];\
 \    const input = inputs[2];\
 \    const output = outputs[0];\
-\    if(min[0] === undefined || max[0] === undefined || input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < input[0].length; i++) {\
+\    const hasMin = !(min[0] === undefined);\
+\    const hasMax = !(max[0] === undefined);\
+\    const hasInput = !(input[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasMin && hasMax && hasInput) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        output[0][i] = Math.min(Math.max(input[0][i], min[0][i]), max[0][i]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (hasMin && hasMax && hasInput));\
 \  }\
 \ }\
 \ registerProcessor('clip-processor',ClipProcessor);\
 \ \
 \ class MaxProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
-\    const in1 = inputs[0];\
-\    const in2 = inputs[1];\
+\    const input1 = inputs[0];\
+\    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(in1[0] === undefined || in2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < in1[0].length; i++) {\
-\        output[0][i] = Math.max(in1[0][i],in2[0][i]);\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
+\        output[0][i] = Math.max(input1[0][i],input2[0][i]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('max-processor',MaxProcessor);\
 \ \
 \ class MinProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
-\    const in1 = inputs[0];\
-\    const in2 = inputs[1];\
+\    const input1 = inputs[0];\
+\    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(in1[0] === undefined || in2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < in1[0].length; i++) {\
-\        output[0][i] = Math.min(in1[0][i],in2[0][i]);\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
+\        output[0][i] = Math.min(input1[0][i],input2[0][i]);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('min-processor',MinProcessor);\
 \ \
 \ class WhiteNoiseProcessor extends AudioWorkletProcessor {\
-\ \
-\  static get parameterDescriptors() { return []; }\
 \  constructor() { super(); }\
 \  process(inputs,outputs,parameters) {\
 \    const output = outputs[0];\
-\    for(let i = 0; i < output[0].length; i++) {\
+\    const blockSize = 128;\
+\    for(let i = 0; i < blockSize; i++) {\
 \      output[0][i] = Math.random()*2-1;\
 \    }\
 \    return true;\
@@ -513,75 +541,80 @@ workletsJS = "\
 \ registerProcessor('white-noise-processor',WhiteNoiseProcessor);\
 \ \
 \ class SinToSqrProcessor extends AudioWorkletProcessor {\
-\ \
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
+\  constructor() { super(); this.notStarted = true; }\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < output[0].length; i++) {\
+\    const hasInput = !(input[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        output[0][i] = (input[0][i] >= 0) ? 1 : -1;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('sin-to-sqr-processor',SinToSqrProcessor);\
 \ \
 \ class SinToTriProcessor extends AudioWorkletProcessor {\
-\ \
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); this.MULT = 4/Math.PI; }\
+\  constructor() { super(); this.notStarted = true; this.MULT = 4/Math.PI; }\
 \  process(inputs,outputs,parameters) {\
 \    const input = inputs[0];\
 \    const output = outputs[0];\
-\    if(input[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
-\      for(let i = 0; i < output[0].length; i++) {\
+\    const hasInput = !(input[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) {\
 \        output[0][i] = Math.abs(Math.asin(input[0][i]))*this.MULT-1;\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || hasInput);\
 \  }\
 \ }\
 \ registerProcessor('sin-to-tri-processor',SinToTriProcessor);\
 \ \
 \ class SinToSawProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); this.MULT = 4/Math.PI; }\
+\  constructor() { super(); this.notStarted = true; this.MULT = 4/Math.PI; }\
 \  process(inputs,outputs,parameters) {\
 \    const input1 = inputs[0];\
 \    const input2 = inputs[1];\
 \    const output = outputs[0];\
-\    if(input1[0] === undefined || input2[0] === undefined){for(let i=0; i<output[0].length;i++)output[0][i]=0;}else{\
+\    const hasInput1 = !(input1[0] === undefined);\
+\    const hasInput2 = !(input2[0] === undefined);\
+\    const blockSize = 128;\
+\    if(hasInput1 && hasInput2) {\
+\      this.notStarted = false;\
 \      var a;\
-\      for(let i = 0; i < output[0].length; i++) {\
+\      for(let i = 0; i < blockSize; i++) {\
 \        a = Math.abs(Math.asin(input1[0][i]))*this.MULT;\
 \        output[0][i] = (input2[0][i] >= 0) ? (a-1) : (1-a);\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (hasInput1 && hasInput2));\
 \  }\
 \ }\
 \ registerProcessor('sin-to-saw-processor',SinToSawProcessor);\
 \ \
 \ class StepProcessor extends AudioWorkletProcessor {\
-\  static get parameterDescriptors() { return []; }\
-\  constructor() { super(); }\
-\  process(inputs,outputs,parameters) {\
+\  constructor() { super(); this.notStarted = true; }\
+\  process(inputs,outputs) {\
 \    const output = outputs[0];\
-\    if(inputs.length < 2) { for(let i = 0; i < output[0].length; i++) output[0][i] = 0;}\
-\    else if(inputs[0][0] === undefined || inputs[1][0] === undefined) { for(let i = 0; i < output[0].length; i++) output[0][i] = 0;}\
-\    else if(inputs.length == 2) { for(let i = 0; i < output[0].length; i++) output[0][i] = inputs[1][0][i];}\
-\    else {\
-\      for(let n = 2; n < inputs.length; n++){\
-\        if(inputs[n][0] === undefined){\
-\          for(let i = 0; i < output[0].length; i++) output[0][i] = 0;\
-\          return true;\
-\        }\
-\      }\
+\    const blockSize = 128;\
+\    var inputCount=0;\
+\    for(let i=0;i<inputs.length;i++){\
+\      if(!(inputs[i][0] === undefined))inputCount++;\
+\    }\
+\    if(inputCount == 2 && (!(inputs[1][0] === undefined))) {\
+\      this.notStarted = false;\
+\      for(let i = 0; i < blockSize; i++) output[0][i] = inputs[1][0][i];\
+\    }\
+\    else if(inputs.length > 2 && inputs.length == inputCount) {\
+\      this.notStarted = false;\
 \      var a,n = inputs.length - 1;\
-\      for(let i = 0; i < output[0].length; i++) {\
+\      for(let i = 0; i < blockSize; i++) {\
 \        a = inputs[0][0][i] * 0.5 + 0.5;\
 \        a = Math.floor ((a - Math.trunc(a)) * n);\
 \        a = (a >= 0) ? a : 0;\
@@ -589,7 +622,7 @@ workletsJS = "\
 \        output[0][i] = inputs[1+a][0][i];\
 \      }\
 \    }\
-\    return true;\
+\    return (this.notStarted || (inputs.length == inputCount));\
 \  }\
 \ }\
 \ registerProcessor('step-processor',StepProcessor);"
