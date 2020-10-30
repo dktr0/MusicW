@@ -62,6 +62,9 @@ powWorklet in1 in2 = audioWorklet "pow-processor" [in1,in2]
 floorWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
 floorWorklet x = audioWorklet "floor-processor" [x]
 
+ceilWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
+ceilWorklet x = audioWorklet "ceil-processor" [x]
+
 fractWorklet :: AudioIO m => NodeRef -> SynthDef m NodeRef
 fractWorklet x = audioWorklet "fract-processor" [x]
 
@@ -446,6 +449,24 @@ workletsJS = "\
 \  }\
 \ }\
 \ registerProcessor('floor-processor',FloorProcessor);\
+\ \
+\ class CeilProcessor extends AudioWorkletProcessor {\
+\  constructor() { super(); this.notStarted = true; }\
+\  process(inputs,outputs,parameters) {\
+\    const input = inputs[0];\
+\    const output = outputs[0];\
+\    const blockSize = 128;\
+\    const hasInput = !(input[0] === undefined);\
+\    if(hasInput){\
+\      this.notStarted = false;\
+\      for(let n=0; n<blockSize;n++){\
+\        output[0][n] = Math.ceil(input[0][n]);\
+\      }\
+\    }\
+\    return (this.notStarted || hasInput);\
+\  }\
+\ }\
+\ registerProcessor('ceil-processor',CeilProcessor);\
 \ \
 \ class FractProcessor extends AudioWorkletProcessor {\
 \  constructor() { super(); this.notStarted = true; }\
