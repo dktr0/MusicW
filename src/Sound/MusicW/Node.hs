@@ -530,3 +530,11 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "$1.startable"
   js_startable :: Node -> Bool
+
+foreign import javascript unsafe
+  "$1.numberOfInputs"
+  numberOfInputs :: Node -> Int
+
+foreign import javascript unsafe
+  "$1.numberOfOutputs"
+  numberOfOutputs :: Node -> Int

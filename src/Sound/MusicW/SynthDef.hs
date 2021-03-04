@@ -10,6 +10,7 @@ import Sound.MusicW.Node
 
 data NodeRef
   = NodeRef Int (Int,Int) -- tuplet is number of input and output channels for this node
+  | ExternalNodeRef Node (Int,Int) -- a node that prexists a synth instantiation, not disconnected etc when synth ends
   | NodeInputRef Int Int -- for a numbered node, a specific numbered input of that node
   | NodeOutputRef Int Int -- for a numbered node, a specific numbered input of that node
   | ParamRef Int ParamType
@@ -18,6 +19,7 @@ data NodeRef
 
 nodeRefInputCount :: NodeRef -> Int
 nodeRefInputCount (NodeRef _ (i,_)) = i
+nodeRefInputCount (ExternalNodeRef _ (i,_)) = i
 nodeRefInputCount (NodeInputRef _ _) = 1
 nodeRefInputCount (NodeOutputRef _ _) = 0
 nodeRefInputCount (ParamRef _ _) = 1
@@ -25,6 +27,7 @@ nodeRefInputCount DestinationRef = 2 -- hard-coding of stereo output here might 
 
 nodeRefOutputCount :: NodeRef -> Int
 nodeRefOutputCount (NodeRef _ (_,o)) = o
+nodeRefOutputCount (ExternalNodeRef _ (_,o)) = o
 nodeRefOutputCount (NodeInputRef _ _) = 0
 nodeRefOutputCount (NodeOutputRef _ _) = 1
 nodeRefOutputCount (ParamRef _ _) = 0
@@ -182,7 +185,13 @@ audioIn :: AudioIO m => SynthDef m NodeRef
 audioIn = addNodeBuilder (0,1) $ createGain 1.0 -- TODO: hard-coded single input channel will be problematic later
 
 microphone :: AudioIO m => SynthDef m NodeRef
-microphone = addNodeBuilder (0,1) createMicrophone 
+microphone = addNodeBuilder (0,1) createMicrophone
+
+externalNode :: AudioIO m => Node -> SynthDef m NodeRef
+externalNode x = do
+  let iChnls = numberOfInputs x
+  let oChnls = numberOfOutputs x
+  return $ ExternalNodeRef x (iChnls,oChnls)
 
 resink :: AudioIO m => NodeRef -> NodeRef -> SynthDef m NodeRef
 resink target input = connect input target >> return target

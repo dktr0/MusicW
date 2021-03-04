@@ -67,6 +67,11 @@ makeConnections _ ns (NodeRef from (_,_)) (ParamRef to pType) = createParameter 
 makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeRef to (_,_)) = connectNodes'' (ns!!fromNode) fromChannel (ns!!to)
 makeConnections _ ns (NodeOutputRef fromNode fromChannel) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes'' (ns!!fromNode) fromChannel
 makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeInputRef toNode toChannel) = connectNodes' (ns!!fromNode) fromChannel (ns!!toNode) toChannel
+makeConnections dest _ (ExternalNodeRef from _) DestinationRef = connectNodes from dest
+makeConnections _ ns (ExternalNodeRef from _) (NodeRef to _) = connectNodes from (ns!!to)
+makeConnections _ ns (NodeRef from _) (ExternalNodeRef to _) = connectNodes (ns!!from) to
+makeConnections _ ns (ExternalNodeRef from _) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes from
+makeConnections _ ns (NodeOutputRef fromNode fromChannel) (ExternalNodeRef to _) = connectNodes'' (ns!!fromNode) fromChannel to
 makeConnections _ _ _ _ = error "Malformed graph structure."
 
 -- *** Note: there is probably a bug connected to the definition of disconnectOnStop below:
