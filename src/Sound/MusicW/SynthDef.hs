@@ -10,26 +10,32 @@ import Sound.MusicW.Node
 
 data NodeRef
   = NodeRef Int (Int,Int) -- tuplet is number of input and output channels for this node
-  | ExternalNodeRef Node (Int,Int) -- a node that prexists a synth instantiation, not disconnected etc when synth ends
   | NodeInputRef Int Int -- for a numbered node, a specific numbered input of that node
-  | NodeOutputRef Int Int -- for a numbered node, a specific numbered input of that node
+  | NodeOutputRef Int Int -- for a numbered node, a specific numbered output of that node
+  | ExternalNodeRef Node (Int,Int) -- a node that prexists a synth instantiation, not disconnected etc when synth ends
+  | ExternalNodeInputRef Node Int -- for an external node, a specific numbered input of that node
+  | ExternalNodeOutputRef Node Int -- for an external node, a specific numbered output of that node
   | ParamRef Int ParamType
   | DestinationRef
   deriving (Show)
 
 nodeRefInputCount :: NodeRef -> Int
 nodeRefInputCount (NodeRef _ (i,_)) = i
-nodeRefInputCount (ExternalNodeRef _ (i,_)) = i
 nodeRefInputCount (NodeInputRef _ _) = 1
 nodeRefInputCount (NodeOutputRef _ _) = 0
+nodeRefInputCount (ExternalNodeRef _ (i,_)) = i
+nodeRefInputCount (ExternalNodeInputRef _ _) = 1
+nodeRefInputCount (ExternalNodeOutputRef _ _) = 0
 nodeRefInputCount (ParamRef _ _) = 1
 nodeRefInputCount DestinationRef = 2 -- hard-coding of stereo output here might be problematic or irrelevant...
 
 nodeRefOutputCount :: NodeRef -> Int
 nodeRefOutputCount (NodeRef _ (_,o)) = o
-nodeRefOutputCount (ExternalNodeRef _ (_,o)) = o
 nodeRefOutputCount (NodeInputRef _ _) = 0
 nodeRefOutputCount (NodeOutputRef _ _) = 1
+nodeRefOutputCount (ExternalNodeRef _ (_,o)) = o
+nodeRefOutputCount (ExternalNodeInputRef _ _) = 0
+nodeRefOutputCount (ExternalNodeOutputRef _ _) = 1
 nodeRefOutputCount (ParamRef _ _) = 0
 nodeRefOutputCount DestinationRef = 0
 
@@ -76,8 +82,12 @@ addNodeBuilder (iCount,oCount) x = do
 connect :: Monad m => NodeRef -> NodeRef -> SynthDef m ()
 connect from to = modify $ \s -> s { connections = connections s ++ [(from,to)] }
 
+-- given two NodeRefs that are either NodeRef or ExternalNodeRef, connect specific inputs and outputs of them to eachother
 connect' :: Monad m => NodeRef -> Int -> NodeRef -> Int -> SynthDef m ()
-connect' (NodeRef fromNode (_,_)) fromIndex (NodeRef toNode (_,_)) toIndex = connect (NodeOutputRef fromNode fromIndex) (NodeInputRef toNode toIndex)
+connect' (NodeRef from _) fromIndex (NodeRef to _) toIndex = connect (NodeOutputRef from fromIndex) (NodeInputRef to toIndex)
+connect' (NodeRef from _) fromIndex (ExternalNodeRef to _) toIndex = connect (NodeOutputRef from fromIndex) (ExternalNodeInputRef to toIndex)
+connect' (ExternalNodeRef from _) fromIndex (NodeRef to _) toIndex = connect (ExternalNodeOutputRef from fromIndex) (NodeInputRef to toIndex)
+connect' (ExternalNodeRef from _) fromIndex (ExternalNodeRef to _) toIndex = connect (ExternalNodeOutputRef from fromIndex) (ExternalNodeInputRef to toIndex)
 connect' _ _ _ _ = error "unsupported connection type in connect'"
 
 addChange :: Monad m => Change -> SynthDef m ()

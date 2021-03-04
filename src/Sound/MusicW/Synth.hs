@@ -60,19 +60,41 @@ synthSpecToSynth dest x = do
   disconnectOnStop ns
   return $ Synth { cachedDestination = dest, spec = x, nodes = ns }
 
+
 makeConnections :: AudioIO m => Node -> [Node] -> NodeRef -> NodeRef -> m ()
-makeConnections dest ns (NodeRef from (_,_)) DestinationRef = connectNodes (ns!!from) dest
-makeConnections _ ns (NodeRef from (_,_)) (NodeRef to (_,_)) = connectNodes (ns!!from) (ns!!to)
-makeConnections _ ns (NodeRef from (_,_)) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes (ns!!from)
-makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeRef to (_,_)) = connectNodes'' (ns!!fromNode) fromChannel (ns!!to)
-makeConnections _ ns (NodeOutputRef fromNode fromChannel) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes'' (ns!!fromNode) fromChannel
-makeConnections _ ns (NodeOutputRef fromNode fromChannel) (NodeInputRef toNode toChannel) = connectNodes' (ns!!fromNode) fromChannel (ns!!toNode) toChannel
-makeConnections dest _ (ExternalNodeRef from _) DestinationRef = connectNodes from dest
+
+-- connections to (deferred) destination
+makeConnections dest ns (NodeRef from _) DestinationRef = connectNodes (ns!!from) dest
+makeConnections dest ns (NodeOutputRef from fromIndex) DestinationRef = connectNodes'' (ns!!from) fromIndex dest
+makeConnections dest ns (ExternalNodeRef from _) DestinationRef = connectNodes from dest
+makeConnections dest ns (ExternalNodeOutputRef from fromIndex) DestinationRef = connectNodes'' from fromIndex dest
+
+-- connections to NodeRef
+makeConnections _ ns (NodeRef from _) (NodeRef to _) = connectNodes (ns!!from) (ns!!to)
+makeConnections _ ns (NodeOutputRef from fromIndex) (NodeRef to _) = connectNodes'' (ns!!from) fromIndex (ns!!to)
 makeConnections _ ns (ExternalNodeRef from _) (NodeRef to _) = connectNodes from (ns!!to)
+makeConnections _ ns (ExternalNodeOutputRef from fromIndex) (NodeRef to _) = connectNodes'' from fromIndex (ns!!to)
+
+-- connections to ExternalNodeRef
 makeConnections _ ns (NodeRef from _) (ExternalNodeRef to _) = connectNodes (ns!!from) to
+makeConnections _ ns (NodeOutputRef from fromIndex) (ExternalNodeRef to _) = connectNodes'' (ns!!from) fromIndex to
+makeConnections _ ns (ExternalNodeRef from _) (ExternalNodeRef to _) = connectNodes from to
+makeConnections _ ns (ExternalNodeOutputRef from fromIndex) (ExternalNodeRef to _) = connectNodes'' from fromIndex to
+
+-- connections to ParamRef
+makeConnections _ ns (NodeRef from _) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes (ns!!from)
+makeConnections _ ns (NodeOutputRef fromNode fromChannel) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes'' (ns!!fromNode) fromChannel
 makeConnections _ ns (ExternalNodeRef from _) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes from
-makeConnections _ ns (NodeOutputRef fromNode fromChannel) (ExternalNodeRef to _) = connectNodes'' (ns!!fromNode) fromChannel to
-makeConnections _ _ _ _ = error "Malformed graph structure."
+makeConnections _ ns (ExternalNodeOutputRef from fromIndex) (ParamRef to pType) = createParameter (ns!!to) pType >>= connectNodes'' from fromIndex
+
+-- connections to NodeInputRef (note that connections from NodeRef/ExternalNodeRef not supported)
+makeConnections _ ns (NodeOutputRef from fromIndex) (NodeInputRef to toIndex) = connectNodes' (ns!!from) fromIndex (ns!!to) toIndex
+makeConnections _ ns (ExternalNodeOutputRef from fromIndex) (NodeInputRef to toIndex) = connectNodes' from fromIndex (ns!!to) toIndex
+
+-- connections to ExternalNodeInputRef (note that connections from NodeRef/ExternalNodeRef not supported)
+makeConnections _ ns (NodeOutputRef from fromIndex) (ExternalNodeInputRef to toIndex) = connectNodes' (ns!!from) fromIndex to toIndex
+makeConnections _ ns (ExternalNodeOutputRef from fromIndex) (ExternalNodeInputRef to toIndex) = connectNodes' from fromIndex to toIndex
+
 
 -- *** Note: there is probably a bug connected to the definition of disconnectOnStop below:
 -- it attaches an onended callback to a single source node from a list of nodes, which doesn't
