@@ -4,6 +4,7 @@ Sound synthesis library, to be used with GHCJS and Web Audio API
 
 # History
 
+- 0.3.7: added externalNode (allows pre-existing Web Audio node to be included in a SynthDef, is not disconnected when Synth ends)
 - 0.3.6: added ceilWorklet
 - 0.3.5.2: audio worklets reworked to address resource (CPU) leak issues
 - 0.3.5.1: added input sanity checking to existing audio worklets (output 0 when inputs not connected yet)
