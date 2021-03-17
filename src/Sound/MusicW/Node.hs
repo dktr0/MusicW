@@ -300,7 +300,7 @@ connectNodes'' fromNode fromChannel toNode
 disconnectNodes :: MonadIO m => Node -> Node -> m ()
 disconnectNodes from to
   | not (js_isSource from) = error $ (show from) ++ " can't be disconnect source."
-  | not (js_isSink to) == False = error $ (show to) ++ " can't be disconnect target."
+  | not (js_isSink to) = error $ (show to) ++ " can't be disconnect target."
   | otherwise   = liftIO $ js_disconnect from to
 
 disconnectAll :: MonadIO m => Node -> m ()
