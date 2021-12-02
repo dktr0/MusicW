@@ -70,6 +70,7 @@ foreign import javascript unsafe
   "$1.currentTime"
   getAudioTime :: AudioContext -> IO AudioTime
 
+
 -- State management functions, both a sync and async version
 
 foreign import javascript unsafe
@@ -120,6 +121,19 @@ foreign import javascript unsafe
   "$1.destination"
   getDestination :: AudioContext -> IO JSVal
 
+foreign import javascript unsafe
+  "$1.destination.maxChannelCount"
+  _maxChannelCount :: AudioContext -> IO Int
+
+foreign import javascript unsafe
+  "$1.destination.channelCount"
+  _channelCount :: AudioContext -> IO Int
+
+foreign import javascript safe
+  "$2.destination.channelCount = $1;"
+  _setChannelCount :: Int -> AudioContext -> IO ()
+
+
 class (MonadIO m) => AudioIO m where
   audioContext :: m AudioContext
 
@@ -132,6 +146,16 @@ sampleRate = audioContext >>= liftIO . getSampleRate
 destination :: AudioIO m => m JSVal -- TODO: not crazy about the JSVal return type here...
 destination = audioContext >>= liftIO . getDestination
 
+maxChannelCount :: AudioIO m => m Int
+maxChannelCount = audioContext >>= liftIO . _maxChannelCount
+
+channelCount :: AudioIO m => m Int
+channelCount = audioContext >>= liftIO . _channelCount
+
+setChannelCount :: AudioIO m => Int -> m ()
+setChannelCount n = audioContext >>= liftIO . _setChannelCount n
+
+  
 type AudioContextIO = ReaderT AudioContext IO
 
 instance AudioIO AudioContextIO where
