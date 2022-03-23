@@ -112,7 +112,7 @@ oscillator :: AudioIO m => OscillatorType -> Double -> SynthDef m NodeRef
 oscillator t f = addNodeBuilder (0,1) $ createOscillator t f
 
 audioBufferSource :: AudioIO m => AudioBuffer -> BufferParams -> SynthDef m NodeRef
-audioBufferSource buf ps = addNodeBuilder (0,1) $ createAudioBufferSource buf ps -- *** hard-coding of 1 output channel could become problematic
+audioBufferSource buf ps = addNodeBuilder (0,1) $ createAudioBufferSource buf ps -- hard-coding of 1 output channel could become problematic
 
 -- for the following definitions, relating to nodes that are sinks, the penultimate
 -- type for each is a NodeRef, so that Synth computations can be chained together
