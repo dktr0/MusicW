@@ -4,6 +4,7 @@ Sound synthesis library, to be used with GHCJS and Web Audio API
 
 # History
 
+- 0.3.10: obsolete json dependency removed
 - 0.3.9: added maxChannelCount, channelCount, setChannelCount
 - 0.3.8: bug fix to disconnectNodes from Sound.MusicW.Node
 - 0.3.7: added externalNode (allows pre-existing Web Audio node to be included in a SynthDef, is not disconnected when Synth ends)
