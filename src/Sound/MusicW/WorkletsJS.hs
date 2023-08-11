@@ -3,7 +3,7 @@ module Sound.MusicW.WorkletsJS where
 unaryProcessor :: String -> String -> String -> String
 unaryProcessor processorName className expr = part1 ++ part2 ++ part3 ++ part4 ++ part5
   where
-    part1 = "class " ++ processorName ++ " extends AudioWorkletProcessor {\n"
+    part1 = "class " ++ className ++ " extends AudioWorkletProcessor {\n"
     part2 = "constructor() { super(); this.notStarted = true; }\n\
 \  process(inputs,outputs,parameters) {\n\
 \    const input = inputs[0];\n\
